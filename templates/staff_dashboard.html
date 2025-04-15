@@ -1023,6 +1023,176 @@
             100% { transform: rotate(-10deg); }
         }
 
+        /* Lateness Settings Modal Styles */
+        .time-input-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .time-input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .time-separator {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0 2px;
+        }
+        
+        .time-period {
+            padding: 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .minutes-input {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 27px;
+            margin-top: 5px;
+            color: #7f8c8d;
+        }
+        
+        .minutes-input input {
+            width: 50px;
+            padding: 5px;
+            border: 1px solid #dcdfe6;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .alert-style-selector {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .alert-style-option {
+            flex: 1;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .alert-style-option.selected {
+            border-color: #3498db;
+        }
+        
+        .alert-style-option::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            background-color: transparent;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .alert-style-option.selected::after {
+            opacity: 1;
+            background-color: #3498db;
+        }
+        
+        .alert-preview {
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .alert-preview.standard {
+            background-color: rgba(241, 196, 15, 0.1);
+            border-left: 4px solid #f1c40f;
+        }
+        
+        .alert-preview.minimal {
+            background-color: rgba(46, 204, 113, 0.1);
+            border: none;
+        }
+        
+        .alert-preview.modern {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 20px;
+        }
+        
+        .alert-preview .alert-icon {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .alert-preview .alert-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .alert-preview.standard .alert-icon {
+            color: #f39c12;
+        }
+        
+        .alert-preview.minimal .alert-icon {
+            color: #27ae60;
+        }
+        
+        .alert-preview.modern .alert-icon {
+            color: #3498db;
+        }
+        
+        .save-settings-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        
+        .save-settings-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .save-settings-btn:active {
+            transform: translateY(0px);
+        }
+
         /* Styling for plans that will be auto-deleted soon */
         .plan-expiring-soon {
             border-left-color: #e74c3c !important;
@@ -1238,18 +1408,55 @@
             background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
         }
         
         .send-btn:hover {
-            transform: scale(1.05);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9, #1c5a85);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0) scale(0.95);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+        
+        .send-btn i {
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .send-btn:hover i {
+            transform: translateX(3px) scale(1.1);
+        }
+        
+        .send-btn:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .send-btn:focus:not(:active):after {
+            animation: ripple 1s ease-out;
         }
         
         .chat-members {
@@ -1359,6 +1566,12 @@
             <div class="date-time-display">
                 <div id="current-date"></div>
                 <div id="current-time"></div>
+            </div>
+            
+            <!-- Lateness Settings Button -->
+            <div class="lateness-settings-button" id="lateness-settings-btn" title="Configure lateness alerts">
+                <i class="fas fa-stopwatch"></i>
+                <span>Lateness Settings</span>
             </div>
             
             <!-- Alert notifications section -->
@@ -1542,6 +1755,79 @@
         </div>
     </div>
 
+    <!-- Lateness Settings Modal -->
+    <div id="lateness-settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title"><i class="fas fa-stopwatch"></i> Lateness Settings</h2>
+            
+            <div class="form-group">
+                <label for="shift-start-hour">Shift Start Time</label>
+                <div class="time-input-container">
+                    <input type="number" id="shift-start-hour" class="time-input" min="0" max="23" value="9" required>
+                    <span class="time-separator">:</span>
+                    <input type="number" id="shift-start-minute" class="time-input" min="0" max="59" value="0" required>
+                    <select id="shift-start-period" class="time-period">
+                        <option value="AM" selected>AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Alert Preferences</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="alert-before-shift" checked>
+                        <label for="alert-before-shift">Alert me before shift starts</label>
+                    </div>
+                    <div class="minutes-input">
+                        <input type="number" id="minutes-before" min="1" max="60" value="15">
+                        <span>minutes before</span>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="alert-late" checked>
+                        <label for="alert-late">Alert me when I'm late</label>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="alert-sound">
+                        <label for="alert-sound">Play sound with alerts</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Alert Style</label>
+                <div class="alert-style-selector">
+                    <div class="alert-style-option" data-style="standard">
+                        <div class="alert-preview standard">
+                            <div class="alert-icon"><i class="fas fa-clock"></i></div>
+                            <div class="alert-text">Standard</div>
+                        </div>
+                    </div>
+                    <div class="alert-style-option" data-style="minimal">
+                        <div class="alert-preview minimal">
+                            <div class="alert-icon"><i class="fas fa-clock"></i></div>
+                            <div class="alert-text">Minimal</div>
+                        </div>
+                    </div>
+                    <div class="alert-style-option selected" data-style="modern">
+                        <div class="alert-preview modern">
+                            <div class="alert-icon"><i class="fas fa-clock"></i></div>
+                            <div class="alert-text">Modern</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="save-lateness-settings" class="save-settings-btn">Save Settings</button>
+        </div>
+    </div>
+
     <!-- Floating Chat Button -->
     <div class="floating-chat-btn" id="chat-btn">
         <i class="fas fa-comments"></i>
@@ -1566,11 +1852,32 @@
             </div>
         </div>
         <div class="chat-input-container">
-            <button class="emoji-btn"><i class="fas fa-smile"></i></button>
             <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
             <button class="send-btn" id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
+
+    <!-- Alarm Modal (Missing component added) -->
+    <div id="alarm-modal" class="modal">
+        <div class="modal-content alarm-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Set Plan Alarm</h2>
+            
+            <div class="form-group">
+                <label for="alarm-time">Alarm Time</label>
+                <input type="time" id="alarm-time" class="alarm-time-input" required>
+            </div>
+            
+            <div id="active-alarm" class="active-alarm" style="display: none;">
+                <div id="alarm-time-display">Alarm set for --:--</div>
+                <button id="cancel-alarm-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <button id="set-alarm-btn" class="set-alarm-btn">Set Alarm</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
 
     <script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
     <script src="{{ url_for('static', filename='js/staff.js') }}"></script>
@@ -2190,6 +2497,31 @@
                 chatMessages.appendChild(messageElement);
                 chatNotification.style.display = 'flex';
             }, 5000);
+
+            // Initialize lateness settings
+            loadLatenessSettings();
+            latenessSettingsBtn.addEventListener('click', function() {
+                latenessSettingsModal.style.display = 'block';
+            });
+            
+            saveLatencySettingsBtn.addEventListener('click', saveLatesnessSettings);
+            
+            // Add event listeners for alert style selection
+            document.querySelectorAll('.alert-style-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.alert-style-option').forEach(opt => 
+                        opt.classList.remove('selected')
+                    );
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Use enhanced lateness check function
+            checkShiftTimeSetting();
+            setInterval(checkShiftTimeSetting, 60000); // Check every minute
         });
     </script>
 </body>

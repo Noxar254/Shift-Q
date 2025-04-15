@@ -61,5 +61,26 @@
         "target_accepted": false,
         "admin_approved": false,
         "submitted_on": "2025-04-15 20:20:35"
+    },
+    {
+        "id": "4eec790d-f81d-42fd-a8f5-04924b6f2217",
+        "requesting_username": "john",
+        "requesting_name": "John Doe",
+        "shift_id": "f810839e-5063-4729-9750-69a20bf9bef1",
+        "shift_details": {
+            "date": "2025-04-15",
+            "time": "10:20:05",
+            "branch": "Downtown Office",
+            "role": "Manager"
+        },
+        "target_username": "jane",
+        "target_name": "Jane Smith",
+        "target_shift_id": null,
+        "target_shift_details": null,
+        "reason": "sick",
+        "status": "pending",
+        "target_accepted": false,
+        "admin_approved": false,
+        "submitted_on": "2025-04-15 22:12:36"
     }
 ]

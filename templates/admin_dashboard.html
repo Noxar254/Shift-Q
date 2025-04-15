@@ -63,17 +63,33 @@
             100% { background-color: transparent; }
         }
 
-        /* Header styling */
+        /* Header styling - Enhanced Version */
         .dashboard-header {
             grid-column: span 2;
             background: var(--primary-gradient);
             color: white;
-            padding: 15px 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px 25px;
+            box-shadow: 0 3px 20px rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
+            position: sticky;
+            top: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard-header.scrolled {
+            padding: 8px 25px;
+            background: rgba(76, 110, 245, 0.95);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
         }
 
         .logo h1 {
@@ -82,21 +98,34 @@
             font-weight: 600;
             display: flex;
             align-items: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 0;
         }
 
         .logo h1:before {
             content: '';
             display: inline-block;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background: white;
-            border-radius: 50%;
-            margin-right: 10px;
+            border-radius: 8px;
+            margin-right: 12px;
             transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            transform: rotate(45deg);
+        }
+
+        .logo h1:after {
+            content: 'Q';
+            position: absolute;
+            left: 10px;
+            color: #4c6ef5;
+            font-size: 1.2rem;
+            font-weight: 700;
         }
 
         .logo h1:hover:before {
-            transform: scale(1.1);
+            transform: rotate(45deg) scale(1.1);
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
         }
 
@@ -106,9 +135,57 @@
             gap: 25px;
         }
 
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            color: white;
+        }
+
+        .header-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .header-icon-btn:active {
+            transform: translateY(0);
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #fa5252;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid rgba(76, 110, 245, 1);
+        }
+
         .date-time {
             text-align: right;
             line-height: 1.2;
+            margin-right: 10px;
         }
 
         .date-time #current-date {
@@ -129,12 +206,43 @@
             border-left: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .user-info span {
-            font-weight: 500;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
         }
 
         .btn-logout {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
             color: white;
             text-decoration: none;
             padding: 8px 15px;
@@ -142,11 +250,117 @@
             font-size: 0.9rem;
             transition: all var(--transition-speed);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-logout:hover {
-            background-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.25);
             transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-logout:active {
+            transform: translateY(0);
+        }
+
+        /* Dropdown menu for user profile */
+        .user-dropdown {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            width: 200px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-menu::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: 20px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            transform: rotate(45deg);
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #4c6ef5;
+        }
+
+        .dropdown-item i {
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .date-time #current-time {
+                font-size: 1.1rem;
+            }
+            
+            .user-details {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 10px 15px;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .date-time {
+                display: none;
+            }
+            
+            .header-icon-btn {
+                width: 35px;
+                height: 35px;
+            }
         }
 
         /* Sidebar styling */
@@ -350,7 +564,7 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: var(--card-shadow);
-            transition: all var(--transition-speed);
+            transition: all var (--transition-speed);
             height: 100%;
         }
 
@@ -575,6 +789,55 @@
             background-color: #fa5252;
             color: white;
             transform: translateY(-2px);
+        }
+
+        .clear-chat-btn {
+            background: linear-gradient(135deg, #fa5252, #e03131);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(250, 82, 82, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .clear-chat-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(250, 82, 82, 0.4);
+        }
+        
+        .clear-chat-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+        
+        .clear-chat-btn i {
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        
+        .clear-chat-btn:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .clear-chat-btn:focus:not(:active):after {
+            animation: ripple 1s ease-out;
         }
 
         /* Filter controls */
@@ -1151,20 +1414,45 @@
 </head>
 <body>
     <div class="admin-dashboard-container">
-        <header class="dashboard-header">
+        <header class="dashboard-header" id="dashboard-header">
             <div class="logo">
                 <h1>Shift Q Admin</h1>
             </div>
             <div class="header-right">
+                <div class="nav-actions">
+                    <button class="header-icon-btn" id="header-notifications-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count">3</span>
+                    </button>
+                    <button class="header-icon-btn" id="theme-toggle-btn" title="Toggle dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
                 <div class="date-time">
                     <div id="current-date"></div>
                     <div id="current-time"></div>
                 </div>
-                <div class="user-info">
-                    <span>Welcome, {{ session.name }}</span>
-                    <a href="{{ url_for('logout') }}" class="btn-logout">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+                <div class="user-dropdown">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name">{{ session.name }}</div>
+                            <div class="user-role">Administrator</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item" id="profile-btn">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item" id="preferences-btn">
+                            <i class="fas fa-cog"></i> Preferences
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -1654,8 +1942,9 @@
             </div>
         </div>
         <div class="chat-input-container">
-            <button class="emoji-btn"><i class="fas fa-smile"></i></button>
+            <button class="emoji-btn" id="emoji-btn" title="Add emoji"><i class="fas fa-smile"></i></button>
             <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
+            <button class="clear-chat-btn" id="clear-chat-btn" title="Clear all messages"><i class="fas fa-trash-alt"></i></button>
             <button class="send-btn" id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
@@ -1678,6 +1967,89 @@
                 });
             });
         }
+
+        // Enhanced navigation bar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sticky header effect
+            const header = document.getElementById('dashboard-header');
+            const adminContent = document.querySelector('.admin-content');
+            
+            window.addEventListener('scroll', function() {
+                if (adminContent.scrollTop > 20) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+            
+            adminContent.addEventListener('scroll', function() {
+                if (adminContent.scrollTop > 20) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // Theme toggle functionality
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const body = document.body;
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            
+            // Apply dark mode if it was saved previously
+            if (isDarkMode) {
+                body.classList.add('dark-mode');
+                themeToggleBtn.querySelector('i').classList.remove('fa-moon');
+                themeToggleBtn.querySelector('i').classList.add('fa-sun');
+            }
+            
+            themeToggleBtn.addEventListener('click', function() {
+                body.classList.toggle('dark-mode');
+                const isDarkMode = body.classList.contains('dark-mode');
+                
+                // Save preference to localStorage
+                localStorage.setItem('darkMode', isDarkMode);
+                
+                // Update icon
+                if (isDarkMode) {
+                    themeToggleBtn.querySelector('i').classList.remove('fa-moon');
+                    themeToggleBtn.querySelector('i').classList.add('fa-sun');
+                } else {
+                    themeToggleBtn.querySelector('i').classList.remove('fa-sun');
+                    themeToggleBtn.querySelector('i').classList.add('fa-moon');
+                }
+            });
+            
+            // Notification button functionality
+            const notificationsBtn = document.getElementById('header-notifications-btn');
+            const notificationsTab = document.querySelector('[data-tab="notifications"]');
+            
+            notificationsBtn.addEventListener('click', function() {
+                // Activate notifications tab
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('notifications-tab').classList.add('active');
+                
+                // Update sidebar active tab
+                document.querySelectorAll('.admin-sidebar nav ul li').forEach(item => {
+                    item.classList.remove('active');
+                });
+                notificationsTab.classList.add('active');
+            });
+            
+            // Add click events for dropdown menu items
+            document.getElementById('profile-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                // Show profile modal or navigate to profile page
+                alert('Profile page will be implemented in future updates.');
+            });
+            
+            document.getElementById('preferences-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                // Show preferences modal
+                alert('Preferences page will be implemented in future updates.');
+            });
+        });
     </script>
 </body>
 </html>

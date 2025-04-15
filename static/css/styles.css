@@ -1174,3 +1174,180 @@ textarea:focus {
 .emoji-btn:hover {
     color: #3498db;
 }
+
+/* Late employee monitoring and warning letter system */
+#late-employees-section, #warning-history-section {
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+#late-employees-table .status-badge.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+#late-employees-table .status-badge.danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+#warning-history-table .status-badge.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+#warning-history-table .status-badge.danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+#warning-letter-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow: auto;
+}
+
+#warning-letter-modal .modal-content {
+    position: relative;
+    margin: 5% auto;
+    width: 70%;
+    max-width: 700px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: modal-appear 0.3s ease;
+}
+
+#warning-letter-modal .modal-header {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#warning-letter-modal .modal-header h3 {
+    margin: 0;
+    color: #343a40;
+}
+
+#warning-letter-modal .close-modal {
+    cursor: pointer;
+    font-size: 24px;
+    color: #6c757d;
+}
+
+#warning-letter-modal .close-modal:hover {
+    color: #343a40;
+}
+
+#warning-letter-modal .modal-body {
+    padding: 20px;
+}
+
+#warning-letter-modal .form-group {
+    margin-bottom: 15px;
+}
+
+#warning-letter-modal .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+#warning-letter-modal .form-group input,
+#warning-letter-modal .form-group select,
+#warning-letter-modal .form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+#warning-letter-modal .form-group input:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+#warning-letter-modal .form-group textarea {
+    resize: vertical;
+    min-height: 150px;
+}
+
+#warning-letter-modal .modal-footer {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: right;
+}
+
+#warning-letter-modal .btn-primary {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#warning-letter-modal .btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+#warning-letter-modal .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#warning-letter-modal .btn-secondary:hover {
+    background-color: #5c636a;
+}
+
+/* Lateness settings in settings tab */
+#lateness-settings {
+    margin-top: 30px;
+    border-top: 1px solid #dee2e6;
+    padding-top: 20px;
+}
+
+#lateness-settings h2 {
+    margin-bottom: 20px;
+    color: #343a40;
+}
+
+#lateness-threshold {
+    width: 80px;
+    text-align: center;
+}
+
+/* Animation for modal appearance */
+@keyframes modal-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

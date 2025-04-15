@@ -70,6 +70,12 @@ let allRoles = {};
 let notifications = [];
 let unreadCount = 0;
 
+// Global variables for late employee tracking
+let lateEmployees = [];
+let warningHistory = [];
+let lateThresholdMinutes = 15; // Default threshold for lateness (15 minutes)
+let monitoringInterval = null;
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     // Set up tab navigation
@@ -147,12 +153,21 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (e.target.closest('.btn-action.reject')) {
                 const notificationId = e.target.closest('.btn-action.reject').getAttribute('data-id');
                 rejectNotification(notificationId);
+            } else if (e.target.closest('.btn-action.send-warning')) {
+                const notificationId = e.target.closest('.btn-action.send-warning').getAttribute('data-id');
+                openWarningLetterModal(notificationId);
             }
         });
     }
 
     // Initialize team chat
     initializeChat();
+    
+    // Initialize late employee monitoring
+    initializeLateEmployeeMonitoring();
+    
+    // Add lateness threshold settings in settings tab
+    setupLatenessSettings();
 });
 
 // Set up tab navigation
@@ -2080,17 +2095,33 @@ function initializeChat() {
         chatModal.style.display = 'flex';
         chatNotification.style.display = 'none';
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Mark messages as read when chat is opened
+        localStorage.setItem('lastChatReadTime', new Date().toISOString());
+        updateChatUnreadCount();
     });
 
     closeChatBtn.addEventListener('click', function() {
         chatModal.style.display = 'none';
     });
 
-    sendChatBtn.addEventListener('click', sendMessage);
+    sendChatBtn.addEventListener('click', sendChatMessage);
+    
+    // Add the clear chat button functionality
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', clearChatMessages);
+    }
+    
+    // Add the emoji button functionality
+    const emojiBtn = document.getElementById('emoji-btn');
+    if (emojiBtn) {
+        emojiBtn.addEventListener('click', toggleEmojiPicker);
+    }
     
     chatInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            sendMessage();
+            sendChatMessage();
         }
     });
     
@@ -2098,80 +2129,191 @@ function initializeChat() {
         chatMembers.classList.toggle('active');
         this.innerHTML = chatMembers.classList.contains('active') 
             ? 'Hide Team Members <i class="fas fa-chevron-up"></i>' 
-            : 'Show Team Members Online <i class="fas fa-chevron-down"></i>';
+            : 'Show Team Members <i class="fas fa-chevron-down"></i>';
     });
     
     // Load chat history from local storage
     loadChatHistory();
     
     // Load team members
-    loadTeamMembers();
+    loadChatTeamMembers();
     
-    // Simulate receiving a message for demo purposes
-    setTimeout(function() {
-        receiveMessage('John Doe', 'Hello! Any updates for today?');
-    }, 3000);
+    // Check for new messages periodically (every 5 seconds)
+    setInterval(checkForNewChatMessages, 5000);
+    
+    // Add seed messages if chat is empty
+    addSeedMessagesIfEmpty();
+    
+    // Initial unread count update
+    updateChatUnreadCount();
+    
+    // Create emoji picker if it doesn't exist
+    createEmojiPicker();
+}
+
+// Toggle emoji picker
+function toggleEmojiPicker(show) {
+    const emojiPicker = document.getElementById('emoji-picker');
+    if (!emojiPicker) return;
+    
+    if (show === undefined) {
+        // Toggle current state
+        emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
+    } else {
+        // Set to specified state
+        emojiPicker.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// Insert emoji into chat input
+function insertEmoji(emoji) {
+    const chatInput = document.getElementById('chat-input');
+    if (!chatInput) return;
+    
+    // Get cursor position
+    const startPos = chatInput.selectionStart;
+    const endPos = chatInput.selectionEnd;
+    
+    // Insert emoji at cursor position
+    const before = chatInput.value.substring(0, startPos);
+    const after = chatInput.value.substring(endPos, chatInput.value.length);
+    chatInput.value = before + emoji + after;
+    
+    // Move cursor after inserted emoji
+    chatInput.selectionStart = chatInput.selectionEnd = startPos + emoji.length;
+    
+    // Focus back on input
+    chatInput.focus();
+}
+
+// Handle photo upload
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.match('image/*')) {
+        alert('Please select an image file');
+        return;
+    }
+
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image file size should not exceed 5MB');
+        return;
+    }
+
+    // Create a FileReader to read the file
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageData = e.target.result; // This is the base64 data URL
+        
+        // Create message object with photo
+        const msgObj = {
+            id: generateUniqueId(),
+            sender: "Admin",
+            role: 'admin',
+            type: 'photo',
+            media: imageData,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Add to UI
+        addMessageToChatDisplay(msgObj);
+        
+        // Store in local storage
+        storeChatMessageToLocalStorage(msgObj);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    
+    // Read the file as a data URL (base64)
+    reader.readAsDataURL(file);
+    
+    // Reset the file input
+    event.target.value = '';
 }
 
 // Send a chat message
-function sendMessage() {
+function sendChatMessage() {
     const messageText = chatInput.value.trim();
     if (!messageText) return;
     
-    // Get current user's name
-    const userName = document.querySelector('.user-info span').textContent.replace('Welcome, ', '');
+    // In a real app, get the current user's name from session
+    // Here we're using "Admin" as the sender name
+    const userName = "Admin";
     
-    // Create message element
-    addMessageToChat('sent', messageText, userName);
+    // Create message object
+    const msgObj = {
+        id: generateUniqueId(),
+        sender: userName,
+        role: 'admin',
+        text: messageText,
+        timestamp: new Date().toISOString(),
+        type: 'text'
+    };
     
-    // Store in local storage for persistence
-    storeChatMessage('sent', messageText, userName);
+    // Add to UI
+    addMessageToChatDisplay(msgObj);
+    
+    // Store in local storage for persistence and cross-user sharing
+    storeChatMessageToLocalStorage(msgObj);
     
     // Clear input
     chatInput.value = '';
     
     // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Simulate admin response for demo
-    simulateResponse(messageText);
+}
+
+// Generate a unique ID for messages
+function generateUniqueId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
 // Add message to chat display
-function addMessageToChat(type, text, sender) {
+function addMessageToChatDisplay(msgObj) {
     const messageElement = document.createElement('div');
-    messageElement.className = `message ${type}`;
+    const isCurrentUser = msgObj.role === 'admin';
     
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    messageElement.className = `message ${isCurrentUser ? 'sent' : 'received'}`;
     
-    messageElement.innerHTML = `
-        <div class="message-bubble">${text}</div>
-        <div class="message-info">${type === 'sent' ? 'You' : `<span class="online-status"></span> ${sender}`} • ${time}</div>
-    `;
+    const time = new Date(msgObj.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (msgObj.type === 'text') {
+        messageElement.innerHTML = `
+            <div class="message-bubble">${msgObj.text}</div>
+            <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msgObj.sender}`} • ${time}</div>
+        `;
+    } else if (msgObj.type === 'photo') {
+        messageElement.innerHTML = `
+            <div class="message-bubble"><img src="${msgObj.media}" alt="Shared photo" class="message-media" onclick="window.open(this.src)"></div>
+            <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msgObj.sender}`} • ${time}</div>
+        `;
+    }
     
     chatMessages.appendChild(messageElement);
 }
 
 // Store chat message in local storage
-function storeChatMessage(type, text, sender) {
+function storeChatMessageToLocalStorage(msgObj) {
     // Get existing messages
     let messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
     
     // Add new message
-    messages.push({
-        type: type,
-        text: text,
-        sender: sender,
-        timestamp: new Date().toISOString()
-    });
+    messages.push(msgObj);
     
-    // Keep only last 50 messages
-    if (messages.length > 50) {
-        messages = messages.slice(messages.length - 50);
+    // Keep only last 100 messages
+    if (messages.length > 100) {
+        messages = messages.slice(messages.length - 100);
     }
     
     // Store back in localStorage
     localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+    
+    // Update last modification time for this session
+    localStorage.setItem('teamChatLastModified', new Date().toISOString());
 }
 
 // Load chat history from local storage
@@ -2181,18 +2323,8 @@ function loadChatHistory() {
     if (messages.length > 0) {
         chatMessages.innerHTML = '';
         
-        messages.forEach(msg => {
-            const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            const messageElement = document.createElement('div');
-            messageElement.className = `message ${msg.type}`;
-            
-            messageElement.innerHTML = `
-                <div class="message-bubble">${msg.text}</div>
-                <div class="message-info">${msg.type === 'sent' ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
-            `;
-            
-            chatMessages.appendChild(messageElement);
+        messages.forEach(msgObj => {
+            addMessageToChatDisplay(msgObj);
         });
         
         // Scroll to bottom
@@ -2200,37 +2332,76 @@ function loadChatHistory() {
     }
 }
 
-// Receive message (simulated or from websocket in real implementation)
-function receiveMessage(sender, text) {
-    // Add message to chat
-    addMessageToChat('received', text, sender);
+// Check for new messages that may have been added by other users
+function checkForNewChatMessages() {
+    const lastModified = localStorage.getItem('teamChatLastModified') || '0';
+    const lastCheck = localStorage.getItem('teamChatLastCheck') || '0';
     
-    // Store in local storage
-    storeChatMessage('received', text, sender);
-    
-    // Show notification if chat is closed
-    if (chatModal.style.display !== 'flex') {
-        chatNotification.style.display = 'flex';
-        chatNotification.textContent = '1';
+    // Only update if there's been a change since our last check
+    if (lastModified > lastCheck) {
+        // Reload chat history
+        loadChatHistory();
+        
+        // Update unread count
+        updateChatUnreadCount();
+        
+        // Update last check time
+        localStorage.setItem('teamChatLastCheck', new Date().toISOString());
     }
+}
+
+// Update unread count for notification badge
+function updateChatUnreadCount() {
+    const lastReadTime = localStorage.getItem('lastChatReadTime') || '0';
+    const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
     
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Consider messages unread if:
+    // 1. They are newer than the last time the user had the chat open
+    // 2. They were not sent by the current user (admin)
+    const unreadMessages = messages.filter(msg => 
+        msg.timestamp > lastReadTime && msg.role !== 'admin'
+    );
+    
+    const count = unreadMessages.length;
+    
+    if (count > 0 && chatModal.style.display !== 'flex') {
+        chatNotification.style.display = 'flex';
+        chatNotification.textContent = count;
+    } else {
+        chatNotification.style.display = 'none';
+    }
 }
 
 // Load team members for chat
-function loadTeamMembers() {
-    // In a real app, fetch this from server
-    // For this demo, we'll use the staff list
+function loadChatTeamMembers() {
     if (!membersList) return;
     
-    const members = [
-        { name: 'John Doe', status: 'online', initial: 'JD' },
-        { name: 'Jane Smith', status: 'online', initial: 'JS' },
-        { name: 'Michael Brown', status: 'offline', initial: 'MB' },
-        { name: 'Sarah Johnson', status: 'online', initial: 'SJ' },
-        { name: 'David Wilson', status: 'offline', initial: 'DW' }
-    ];
+    // In a real app, this would come from the server
+    // For this demo, we'll use staff from our global allStaff array
+    const members = allStaff.map(staff => {
+        return {
+            id: staff.username,
+            name: staff.name,
+            status: Math.random() > 0.3 ? 'online' : 'offline', // Randomly set status for demo
+            initial: getInitialsFromName(staff.name)
+        };
+    });
+    
+    // Add admin/manager
+    members.unshift({
+        id: 'admin',
+        name: 'Admin',
+        status: 'online',
+        initial: 'A'
+    });
+    
+    // Sort - online users first, then alphabetically
+    members.sort((a, b) => {
+        if (a.status === b.status) {
+            return a.name.localeCompare(b.name);
+        }
+        return a.status === 'online' ? -1 : 1;
+    });
     
     let html = '';
     
@@ -2247,293 +2418,841 @@ function loadTeamMembers() {
     membersList.innerHTML = html;
 }
 
-// Simulate responses for demo purposes
-function simulateResponse(message) {
-    // Simple AI-like responses for demo
-    setTimeout(() => {
-        const lowerMessage = message.toLowerCase();
-        let response = '';
-        
-        if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-            response = "Hello! How can I help you today?";
-        }
-        else if (lowerMessage.includes('shift') || lowerMessage.includes('schedule')) {
-            response = "I've updated the shift schedule for next week. Please check your dashboard.";
-        }
-        else if (lowerMessage.includes('leave') || lowerMessage.includes('day off') || lowerMessage.includes('vacation')) {
-            response = "Please submit your leave request through the system and I'll approve it promptly.";
-        }
-        else if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
-            response = "I'm here to help! What specific issue are you having?";
-        }
-        else if (lowerMessage.includes('thanks') || lowerMessage.includes('thank you')) {
-            response = "You're welcome! Let me know if you need anything else.";
-        }
-        else {
-            response = "I've received your message and will get back to you shortly.";
-        }
-        
-        // Randomly select a team member to respond
-        const respondingStaff = ['John Doe', 'Jane Smith', 'Sarah Johnson'][Math.floor(Math.random() * 3)];
-        
-        receiveMessage(respondingStaff, response);
-    }, 1000 + Math.random() * 2000); // Random delay between 1-3 seconds
+// Helper function to get initials from name
+function getInitialsFromName(name) {
+    return name
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .substr(0, 2);
 }
 
-// Team Chat functionality
-function initializeTeamChat() {
-    const chatBtn = document.getElementById('chat-btn');
-    const chatModal = document.getElementById('chat-modal');
-    const closeChatBtn = document.getElementById('close-chat-btn');
-    const sendChatBtn = document.getElementById('send-chat-btn');
-    const chatInput = document.getElementById('chat-input');
-    const chatMessages = document.getElementById('chat-messages');
-    const chatNotification = document.getElementById('chat-notification');
-    const toggleMembersBtn = document.getElementById('toggle-members-btn');
-    const chatMembers = document.getElementById('chat-members');
-    const membersList = document.getElementById('members-list');
+// Add seed messages if this is a fresh chat
+function addSeedMessagesIfEmpty() {
+    const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
     
-    if (!chatBtn || !chatModal) return;
-    
-    // Setup event listeners
-    chatBtn.addEventListener('click', function() {
-        chatModal.style.display = 'flex';
-        chatNotification.style.display = 'none';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (messages.length === 0) {
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
         
-        // Mark messages as read
-        localStorage.setItem('lastChatReadTime', new Date().toISOString());
-        updateUnreadCount();
-    });
-    
-    closeChatBtn.addEventListener('click', function() {
-        chatModal.style.display = 'none';
-    });
-    
-    sendChatBtn.addEventListener('click', sendMessage);
-    
-    chatInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    });
-    
-    toggleMembersBtn.addEventListener('click', function() {
-        chatMembers.classList.toggle('active');
-        this.innerHTML = chatMembers.classList.contains('active') 
-            ? 'Hide Team Members <i class="fas fa-chevron-up"></i>' 
-            : 'Show Team Members <i class="fas fa-chevron-down"></i>';
-    });
-    
-    // Load initial data
-    loadChatHistory();
-    loadTeamMembers();
-    
-    // Set interval to check for new messages
-    setInterval(checkForNewMessages, 3000);
-    
-    // Add initial messages if chat is empty
-    addInitialMessages();
-    
-    // Send a message
-    function sendMessage() {
-        const message = chatInput.value.trim();
-        if (!message) return;
+        const seedMessages = [
+            {
+                id: 'seed-1',
+                sender: 'Admin',
+                role: 'admin',
+                text: 'Welcome to the Shift Q Team Chat! 👋',
+                timestamp: yesterday.toISOString(),
+                type: 'text'
+            },
+            {
+                id: 'seed-2',
+                sender: 'Admin',
+                role: 'admin',
+                text: 'This is where we can all communicate about shifts, leave requests, and general team updates.',
+                timestamp: yesterday.toISOString(),
+                type: 'text'
+            },
+            {
+                id: 'seed-3',
+                sender: 'John Doe',
+                role: 'staff',
+                text: 'Hey everyone! Looking forward to working with you all!',
+                timestamp: yesterday.toISOString(),
+                type: 'text'
+            },
+            {
+                id: 'seed-4',
+                sender: 'Jane Smith',
+                role: 'staff',
+                text: 'Good morning team, I\'ll be at the downtown branch today if anyone needs help.',
+                timestamp: now.toISOString(),
+                type: 'text'
+            }
+        ];
         
-        // Get current user info (admin/manager)
-        const userName = getCurrentUserName();
+        localStorage.setItem('teamChatMessages', JSON.stringify(seedMessages));
+        localStorage.setItem('teamChatLastModified', now.toISOString());
+        loadChatHistory();
+    }
+}
+
+// Clear all chat messages
+function clearChatMessages() {
+    if (confirm('Are you sure you want to clear all chat messages? This cannot be undone.')) {
+        // Clear chat messages from display
+        chatMessages.innerHTML = '';
         
-        // Create message object
-        const msgObj = {
-            id: generateMessageId(),
-            sender: userName,
-            senderRole: 'admin',
-            message: message,
+        // Clear messages from local storage
+        localStorage.removeItem('teamChatMessages');
+        
+        // Add a system message indicating the chat was cleared
+        const clearMsg = {
+            id: generateUniqueId(),
+            sender: 'System',
+            role: 'system',
+            text: 'Chat history has been cleared by Admin.',
             timestamp: new Date().toISOString(),
-            isRead: false
+            type: 'text'
         };
         
-        // Add to messages
-        addChatMessage(msgObj);
+        // Add to UI
+        addMessageToChatDisplay(clearMsg);
         
-        // Save to storage
-        saveChatMessage(msgObj);
+        // Store in local storage
+        storeChatMessageToLocalStorage(clearMsg);
         
-        // Clear input
-        chatInput.value = '';
+        // Update last modification time
+        localStorage.setItem('teamChatLastModified', new Date().toISOString());
         
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Show success message
+        alert('Chat history has been cleared.');
+    }
+}
+
+// Initialize late employee monitoring
+function initializeLateEmployeeMonitoring() {
+    // Create late employee table and section if it doesn't exist yet
+    createLateEmployeeSection();
+    
+    // Start monitoring for late employees
+    startLateEmployeeMonitoring();
+    
+    // Load existing late employees
+    loadLateEmployees();
+    
+    // Load warning history
+    loadWarningHistory();
+}
+
+// Create late employee section in dashboard
+function createLateEmployeeSection() {
+    // Check if late employee section already exists
+    if (document.getElementById('late-employees-section')) return;
+    
+    // Find dashboard tab content
+    const dashboardTab = document.getElementById('dashboard-tab');
+    if (!dashboardTab) return;
+    
+    // Create late employees section
+    const lateEmployeesSection = document.createElement('div');
+    lateEmployeesSection.id = 'late-employees-section';
+    lateEmployeesSection.className = 'dashboard-section';
+    lateEmployeesSection.innerHTML = `
+        <div class="section-header">
+            <h3>Late Employees</h3>
+            <div class="section-actions">
+                <button id="refresh-late-btn" class="btn-action">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </div>
+        <div class="section-body">
+            <table id="late-employees-table" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Branch</th>
+                        <th>Scheduled Time</th>
+                        <th>Late By</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="loading-cell">Monitoring for late employees...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // Add late employees section to dashboard
+    dashboardTab.appendChild(lateEmployeesSection);
+    
+    // Add warning history section
+    const warningHistorySection = document.createElement('div');
+    warningHistorySection.id = 'warning-history-section';
+    warningHistorySection.className = 'dashboard-section';
+    warningHistorySection.innerHTML = `
+        <div class="section-header">
+            <h3>Warning Letter History</h3>
+        </div>
+        <div class="section-body">
+            <table id="warning-history-table" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th>Warning Level</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" class="loading-cell">Loading warning history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // Add warning history section to dashboard
+    dashboardTab.appendChild(warningHistorySection);
+    
+    // Add event listener to refresh button
+    document.getElementById('refresh-late-btn').addEventListener('click', checkForLateEmployees);
+}
+
+// Start monitoring for late employees
+function startLateEmployeeMonitoring() {
+    // Clear any existing monitoring interval
+    if (monitoringInterval) {
+        clearInterval(monitoringInterval);
     }
     
-    // Get current user name (admin/manager)
-    function getCurrentUserName() {
-        // In a real app, this would come from the session
-        // For demo, we'll use a fixed name
-        return 'Admin';
+    // Check for late employees immediately
+    checkForLateEmployees();
+    
+    // Set up regular monitoring (check every minute)
+    monitoringInterval = setInterval(checkForLateEmployees, 60000);
+}
+
+// Check for late employees
+function checkForLateEmployees() {
+    // In a real application, this would query the server for employees who are late
+    // For this example, we'll use simulated data
+    
+    const lateEmployeesTable = document.getElementById('late-employees-table');
+    if (!lateEmployeesTable) return;
+    
+    // For demo, simulate API fetch
+    lateEmployeesTable.querySelector('tbody').innerHTML = 
+        '<tr><td colspan="6" class="loading-cell">Checking for late employees...</td></tr>';
+    
+    setTimeout(() => {
+        // Get current date and time
+        const now = new Date();
+        
+        // Simulated scheduled shifts for today - in a real app, fetch from server
+        const todaySchedule = [
+            {
+                id: '1001',
+                name: 'John Doe',
+                branch: 'Headquarters',
+                role: 'Associate',
+                scheduledTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0),
+                clockInTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 17)
+            },
+            {
+                id: '1002',
+                name: 'Jane Smith',
+                branch: 'Downtown Office',
+                role: 'Supervisor',
+                scheduledTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0),
+                clockInTime: null // Not clocked in yet
+            },
+            {
+                id: '1003',
+                name: 'Michael Brown',
+                branch: 'West Coast',
+                role: 'Manager',
+                scheduledTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0),
+                clockInTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 2) // Only 2 minutes late
+            }
+        ];
+        
+        // Filter for late employees
+        const lateStaff = todaySchedule.filter(employee => {
+            // Not clocked in yet
+            if (!employee.clockInTime) {
+                // Check if scheduled time is in the past
+                return new Date() > employee.scheduledTime;
+            } 
+            // Clocked in late
+            else {
+                // Calculate minutes late
+                const minutesLate = Math.floor((employee.clockInTime - employee.scheduledTime) / (1000 * 60));
+                return minutesLate > lateThresholdMinutes;
+            }
+        });
+        
+        // Store late employees globally
+        lateEmployees = lateStaff;
+        
+        // Display late employees
+        displayLateEmployees(lateStaff);
+        
+        // Generate notifications for new late employees
+        generateLateEmployeeNotifications(lateStaff);
+    }, 1000);
+}
+
+// Display late employees in table
+function displayLateEmployees(lateStaff) {
+    const lateEmployeesTable = document.getElementById('late-employees-table');
+    if (!lateEmployeesTable) return;
+    
+    const tbody = lateEmployeesTable.querySelector('tbody');
+    
+    if (lateStaff.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">No late employees found.</td></tr>';
+        return;
     }
     
-    // Generate unique message ID
-    function generateMessageId() {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    let html = '';
+    lateStaff.forEach(employee => {
+        const scheduledTime = formatTime(employee.scheduledTime);
+        
+        // Calculate how late
+        let lateBy = '';
+        let statusClass = '';
+        let statusText = '';
+        
+        if (!employee.clockInTime) {
+            const minutesLate = Math.floor((new Date() - employee.scheduledTime) / (1000 * 60));
+            lateBy = `${minutesLate} minutes and counting`;
+            statusClass = minutesLate > 30 ? 'danger' : 'warning';
+            statusText = 'Not clocked in';
+        } else {
+            const minutesLate = Math.floor((employee.clockInTime - employee.scheduledTime) / (1000 * 60));
+            lateBy = `${minutesLate} minutes`;
+            statusClass = minutesLate > 30 ? 'danger' : 'warning';
+            statusText = 'Clocked in late';
+        }
+        
+        html += `
+            <tr>
+                <td>${employee.name}</td>
+                <td>${employee.branch}</td>
+                <td>${scheduledTime}</td>
+                <td><span class="status-badge ${statusClass}">${lateBy}</span></td>
+                <td>${statusText}</td>
+                <td>
+                    <button class="btn-action send-warning" data-id="${employee.id}" data-name="${employee.name}">Send Warning</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Add event listeners to warning buttons
+    document.querySelectorAll('#late-employees-table .btn-action.send-warning').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-id');
+            const employeeName = this.getAttribute('data-name');
+            openWarningLetterModal(employeeId, employeeName);
+        });
+    });
+}
+
+// Generate notifications for new late employees
+function generateLateEmployeeNotifications(lateStaff) {
+    // Only create notifications for employees who are not already in notifications
+    lateStaff.forEach(employee => {
+        // Check if notification already exists for this late instance
+        const existingNotification = notifications.find(n => 
+            n.type === 'late-check-in' && 
+            n.employeeId === employee.id &&
+            isSameDay(new Date(n.date), new Date())
+        );
+        
+        if (!existingNotification) {
+            const minutesLate = employee.clockInTime 
+                ? Math.floor((employee.clockInTime - employee.scheduledTime) / (1000 * 60))
+                : Math.floor((new Date() - employee.scheduledTime) / (1000 * 60));
+            
+            const notificationObj = {
+                id: 'late-' + Date.now() + '-' + employee.id,
+                title: 'Late Check-in Alert',
+                message: `${employee.name} is ${minutesLate} minutes late for their shift at ${employee.branch}.`,
+                time: 'Just now',
+                type: 'late-check-in',
+                status: 'unread',
+                actions: ['send-warning', 'read'],
+                employeeId: employee.id,
+                employeeName: employee.name,
+                date: new Date().toISOString(),
+                minutesLate: minutesLate,
+                branch: employee.branch
+            };
+            
+            // Add to notifications
+            notifications.unshift(notificationObj);
+            
+            // Update UI
+            updateUnreadCount();
+            
+            // Update notifications display if it's currently showing
+            if (document.getElementById('notifications-tab').classList.contains('active')) {
+                displayNotifications(filterNotificationsByStatus(notificationFilter.value));
+            }
+        }
+    });
+}
+
+// Load late employees
+function loadLateEmployees() {
+    // In a real app, fetch this data from server
+    // For now, just execute the check function
+    checkForLateEmployees();
+}
+
+// Load warning history
+function loadWarningHistory() {
+    const warningHistoryTable = document.getElementById('warning-history-table');
+    if (!warningHistoryTable) return;
+    
+    // In a real app, fetch from server
+    // For demo, use sample data
+    setTimeout(() => {
+        // Sample warning history data
+        warningHistory = [
+            {
+                id: 'warn-001',
+                employeeId: '1001',
+                employeeName: 'John Doe',
+                date: '2025-04-10T08:17:00',
+                reason: 'Late arrival (17 minutes)',
+                level: 'First Warning',
+                status: 'Sent'
+            },
+            {
+                id: 'warn-002',
+                employeeId: '1002',
+                employeeName: 'Jane Smith',
+                date: '2025-04-05T09:45:00',
+                reason: 'Late arrival (45 minutes)',
+                level: 'Second Warning',
+                status: 'Sent'
+            }
+        ];
+        
+        displayWarningHistory(warningHistory);
+    }, 1000);
+}
+
+// Display warning history
+function displayWarningHistory(warnings) {
+    const warningHistoryTable = document.getElementById('warning-history-table');
+    if (!warningHistoryTable) return;
+    
+    const tbody = warningHistoryTable.querySelector('tbody');
+    
+    if (warnings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">No warning letters have been sent.</td></tr>';
+        return;
     }
     
-    // Add a message to the chat display
-    function addChatMessage(msgObj) {
-        const messageEl = document.createElement('div');
-        const isSentByCurrentUser = msgObj.sender === getCurrentUserName();
+    let html = '';
+    warnings.forEach(warning => {
+        const date = formatDateTime(warning.date);
+        let levelClass = '';
         
-        messageEl.className = `message ${isSentByCurrentUser ? 'sent' : 'received'}`;
+        switch (warning.level) {
+            case 'First Warning':
+                levelClass = 'warning';
+                break;
+            case 'Second Warning':
+                levelClass = 'danger';
+                break;
+            case 'Final Warning':
+                levelClass = 'danger';
+                break;
+            default:
+                levelClass = 'warning';
+        }
         
-        const time = new Date(msgObj.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        messageEl.innerHTML = `
-            <div class="message-bubble">${msgObj.message}</div>
-            <div class="message-info">
-                ${isSentByCurrentUser ? 'You' : `<span class="online-status"></span> ${msgObj.sender}`} 
-                • ${time}
+        html += `
+            <tr>
+                <td>${warning.employeeName}</td>
+                <td>${date}</td>
+                <td>${warning.reason}</td>
+                <td><span class="status-badge ${levelClass}">${warning.level}</span></td>
+                <td>${warning.status}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// Open warning letter modal
+function openWarningLetterModal(employeeId, employeeName) {
+    // Create modal if it doesn't exist
+    if (!document.getElementById('warning-letter-modal')) {
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'warning-letter-modal';
+        modalDiv.className = 'modal';
+        modalDiv.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="warning-modal-title">Send Warning Letter</h3>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="warning-letter-form">
+                        <div class="form-group">
+                            <label for="warning-employee">Employee:</label>
+                            <input type="text" id="warning-employee" disabled>
+                            <input type="hidden" id="warning-employee-id">
+                        </div>
+                        <div class="form-group">
+                            <label for="warning-reason">Reason:</label>
+                            <input type="text" id="warning-reason" placeholder="Reason for warning">
+                        </div>
+                        <div class="form-group">
+                            <label for="warning-level">Warning Level:</label>
+                            <select id="warning-level">
+                                <option value="First Warning">First Warning</option>
+                                <option value="Second Warning">Second Warning</option>
+                                <option value="Final Warning">Final Warning</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="warning-message">Message:</label>
+                            <textarea id="warning-message" rows="8"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="send-warning-btn" class="btn-primary">Send Warning</button>
+                    <button id="cancel-warning-btn" class="btn-secondary">Cancel</button>
+                </div>
             </div>
         `;
         
-        chatMessages.appendChild(messageEl);
+        document.body.appendChild(modalDiv);
+        
+        // Add event listeners
+        document.querySelector('#warning-letter-modal .close-modal').addEventListener('click', closeWarningModal);
+        document.getElementById('cancel-warning-btn').addEventListener('click', closeWarningModal);
+        document.getElementById('send-warning-btn').addEventListener('click', sendWarningLetter);
+        
+        // Pre-populate warning message template when reason or level changes
+        document.getElementById('warning-reason').addEventListener('input', populateWarningTemplate);
+        document.getElementById('warning-level').addEventListener('change', populateWarningTemplate);
     }
     
-    // Save message to local storage
-    function saveChatMessage(msgObj) {
-        const messages = getChatMessages();
-        messages.push(msgObj);
-        
-        // Limit to last 100 messages
-        if (messages.length > 100) {
-            messages.shift();
-        }
-        
-        localStorage.setItem('teamChatMessages', JSON.stringify(messages));
-    }
-    
-    // Get all chat messages from storage
-    function getChatMessages() {
-        const storedMessages = localStorage.getItem('teamChatMessages');
-        return storedMessages ? JSON.parse(storedMessages) : [];
-    }
-    
-    // Load chat history
-    function loadChatHistory() {
-        const messages = getChatMessages();
-        chatMessages.innerHTML = '';
-        
-        messages.forEach(msg => {
-            addChatMessage(msg);
-        });
-        
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-    
-    // Add initial messages if chat is empty
-    function addInitialMessages() {
-        const messages = getChatMessages();
-        
-        if (messages.length === 0) {
-            const initialMessages = [
-                {
-                    id: 'initial-1',
-                    sender: 'Admin',
-                    senderRole: 'admin',
-                    message: 'Welcome to the Shift Q Team Chat! 👋',
-                    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-                    isRead: true
-                },
-                {
-                    id: 'initial-2',
-                    sender: 'Admin',
-                    senderRole: 'admin',
-                    message: 'This is a group chat where all team members can communicate with each other. Feel free to ask questions or share updates about your shifts.',
-                    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-                    isRead: true
-                }
-            ];
-            
-            initialMessages.forEach(msg => {
-                saveChatMessage(msg);
-                addChatMessage(msg);
-            });
-        }
-    }
-    
-    // Check for new messages
-    function checkForNewMessages() {
-        const lastCheckTime = localStorage.getItem('lastChatCheckTime');
-        if (!lastCheckTime) {
-            localStorage.setItem('lastChatCheckTime', new Date().toISOString());
-            return;
-        }
-        
-        // In a real app, you would check with server
-        // For our demo, we'll just update the lastCheckTime
-        localStorage.setItem('lastChatCheckTime', new Date().toISOString());
-        
-        // Check if there are unread messages
-        updateUnreadCount();
-    }
-    
-    // Update unread count badge
-    function updateUnreadCount() {
-        const lastReadTime = localStorage.getItem('lastChatReadTime') || '2000-01-01';
-        const messages = getChatMessages();
-        
-        const unreadCount = messages.filter(msg => 
-            msg.timestamp > lastReadTime && msg.sender !== getCurrentUserName()
-        ).length;
-        
-        if (unreadCount > 0 && chatModal.style.display !== 'flex') {
-            chatNotification.style.display = 'flex';
-            chatNotification.textContent = unreadCount;
+    // Get employee name if not provided
+    if (!employeeName && employeeId) {
+        const employee = lateEmployees.find(e => e.id === employeeId);
+        if (employee) {
+            employeeName = employee.name;
         } else {
-            chatNotification.style.display = 'none';
+            // Try to find in notifications
+            const notification = notifications.find(n => n.employeeId === employeeId);
+            if (notification) {
+                employeeName = notification.employeeName;
+            }
         }
     }
     
-    // Load team members list
-    function loadTeamMembers() {
-        if (!membersList) return;
-        
-        // In a real app, this would come from the server
-        const members = [
-            { name: 'Admin', role: 'admin', status: 'online' },
-            { name: 'John Doe', role: 'staff', status: 'online' },
-            { name: 'Jane Smith', role: 'staff', status: 'online' },
-            { name: 'David Wilson', role: 'staff', status: 'offline' },
-            { name: 'Sarah Johnson', role: 'staff', status: 'offline' }
-        ];
-        
-        membersList.innerHTML = '';
-        
-        members.forEach(member => {
-            const memberEl = document.createElement('div');
-            memberEl.className = 'member-item';
-            
-            const initials = member.name
-                .split(' ')
-                .map(n => n[0])
-                .join('')
-                .toUpperCase();
-            
-            memberEl.innerHTML = `
-                <div class="member-avatar">${initials}</div>
-                <div class="member-name">${member.name}</div>
-                <div class="member-status ${member.status}">${member.status}</div>
-            `;
-            
-            membersList.appendChild(memberEl);
-        });
+    // Get lateness details
+    let latenessDetails = '';
+    const employee = lateEmployees.find(e => e.id === employeeId);
+    if (employee) {
+        const minutesLate = employee.clockInTime 
+            ? Math.floor((employee.clockInTime - employee.scheduledTime) / (1000 * 60))
+            : Math.floor((new Date() - employee.scheduledTime) / (1000 * 60));
+        latenessDetails = `Late arrival (${minutesLate} minutes)`;
+    }
+    
+    // Show modal and populate fields
+    const warningModal = document.getElementById('warning-letter-modal');
+    document.getElementById('warning-employee').value = employeeName || 'Unknown Employee';
+    document.getElementById('warning-employee-id').value = employeeId || '';
+    document.getElementById('warning-reason').value = latenessDetails;
+    
+    // Set appropriate warning level based on history
+    const existingWarnings = warningHistory.filter(w => w.employeeId === employeeId);
+    let warningLevel = 'First Warning';
+    
+    if (existingWarnings.length === 1) {
+        warningLevel = 'Second Warning';
+    } else if (existingWarnings.length >= 2) {
+        warningLevel = 'Final Warning';
+    }
+    
+    document.getElementById('warning-level').value = warningLevel;
+    
+    // Populate initial template
+    populateWarningTemplate();
+    
+    // Show modal
+    warningModal.style.display = 'block';
+}
+
+// Populate warning letter template
+function populateWarningTemplate() {
+    const employeeName = document.getElementById('warning-employee').value;
+    const reason = document.getElementById('warning-reason').value;
+    const level = document.getElementById('warning-level').value;
+    const messageArea = document.getElementById('warning-message');
+    
+    // Warning letter template based on level
+    let template = '';
+    
+    // Get current date formatted
+    const currentDate = formatDate(new Date());
+    
+    if (level === 'Final Warning') {
+        template = `Dear ${employeeName},
+
+This letter serves as a FINAL WARNING regarding your recent violation of company attendance policy: ${reason}.
+
+This is now the third documented occurrence of this violation. Any further incidents may result in immediate termination of employment.
+
+You are required to acknowledge receipt of this warning and commit to immediate and sustained improvement.
+
+Date: ${currentDate}
+
+Please contact HR if you have any questions or concerns.`;
+    } else if (level === 'Second Warning') {
+        template = `Dear ${employeeName},
+
+This letter serves as a SECOND WARNING regarding your recent violation of company attendance policy: ${reason}.
+
+Please be aware that this is the second documented occurrence of this violation. Any further incidents will result in a final warning before possible termination.
+
+You are required to acknowledge receipt of this warning and commit to immediate improvement.
+
+Date: ${currentDate}
+
+Please contact HR if you have any questions or concerns.`;
+    } else {
+        template = `Dear ${employeeName},
+
+This letter serves as a formal warning regarding your recent violation of company attendance policy: ${reason}.
+
+Please be aware that this behavior does not meet our company's expectations and standards. We expect all employees to arrive on time for their scheduled shifts.
+
+You are required to acknowledge receipt of this warning and commit to improvement going forward.
+
+Date: ${currentDate}
+
+Please contact HR if you have any questions or concerns.`;
+    }
+    
+    messageArea.value = template;
+}
+
+// Close warning letter modal
+function closeWarningModal() {
+    const warningModal = document.getElementById('warning-letter-modal');
+    if (warningModal) {
+        warningModal.style.display = 'none';
     }
 }
 
-// Initialize team chat when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
+// Send warning letter
+function sendWarningLetter() {
+    const employeeId = document.getElementById('warning-employee-id').value;
+    const employeeName = document.getElementById('warning-employee').value;
+    const reason = document.getElementById('warning-reason').value;
+    const level = document.getElementById('warning-level').value;
+    const message = document.getElementById('warning-message').value;
     
-    // Initialize team chat
-    initializeTeamChat();
-});
+    if (!reason || !message) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    // In a real app, send to server
+    // For demo, just add to warning history
+    const warningObj = {
+        id: 'warn-' + Date.now().toString(36),
+        employeeId: employeeId,
+        employeeName: employeeName,
+        date: new Date().toISOString(),
+        reason: reason,
+        level: level,
+        status: 'Sent',
+        message: message
+    };
+    
+    // Add to warning history
+    warningHistory.unshift(warningObj);
+    
+    // Update UI
+    displayWarningHistory(warningHistory);
+    
+    // Close modal
+    closeWarningModal();
+    
+    // Show success message
+    alert(`Warning letter sent to ${employeeName}.`);
+    
+    // Send email notification (in a real app)
+    console.log(`Sending email to ${employeeName} with warning letter:`, warningObj);
+}
+
+// Setup lateness settings
+function setupLatenessSettings() {
+    const settingsTab = document.getElementById('settings-tab');
+    if (!settingsTab) return;
+    
+    // Check if lateSettings section already exists
+    if (document.getElementById('lateness-settings')) return;
+    
+    // Create lateness settings section
+    const lateSettings = document.createElement('div');
+    lateSettings.id = 'lateness-settings';
+    lateSettings.className = 'settings-category';
+    lateSettings.innerHTML = `
+        <h2>Lateness Settings</h2>
+        <div class="settings-item">
+            <div class="settings-item-main">
+                <div class="settings-item-name">Lateness Threshold (minutes)</div>
+                <div class="settings-item-detail">
+                    <input type="number" id="lateness-threshold" min="1" max="60" value="${lateThresholdMinutes}">
+                </div>
+            </div>
+            <div class="settings-item-actions">
+                <button id="save-lateness-threshold" class="btn-action">Save</button>
+            </div>
+        </div>
+        <div class="settings-item">
+            <div class="settings-item-main">
+                <div class="settings-item-name">Late Employee Monitoring</div>
+                <div class="settings-item-detail">
+                    <select id="monitoring-frequency">
+                        <option value="30000">Every 30 seconds</option>
+                        <option value="60000" selected>Every minute</option>
+                        <option value="120000">Every 2 minutes</option>
+                        <option value="300000">Every 5 minutes</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-item-actions">
+                <button id="save-monitoring-frequency" class="btn-action">Save</button>
+            </div>
+        </div>
+    `;
+    
+    // Add to settings tab
+    settingsTab.appendChild(lateSettings);
+    
+    // Add event listeners
+    document.getElementById('save-lateness-threshold').addEventListener('click', function() {
+        const threshold = parseInt(document.getElementById('lateness-threshold').value);
+        if (threshold >= 1 && threshold <= 60) {
+            lateThresholdMinutes = threshold;
+            alert(`Lateness threshold updated to ${threshold} minutes.`);
+            
+            // Refresh late employee checks with new threshold
+            checkForLateEmployees();
+        } else {
+            alert('Please enter a valid threshold between 1 and 60 minutes.');
+        }
+    });
+    
+    document.getElementById('save-monitoring-frequency').addEventListener('click', function() {
+        const frequency = parseInt(document.getElementById('monitoring-frequency').value);
+        
+        // Clear existing interval
+        if (monitoringInterval) {
+            clearInterval(monitoringInterval);
+        }
+        
+        // Set new interval
+        monitoringInterval = setInterval(checkForLateEmployees, frequency);
+        
+        alert(`Monitoring frequency updated successfully.`);
+    });
+}
+
+// Helper function to format time (HH:MM AM/PM)
+function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Helper function to check if two dates are the same day
+function isSameDay(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+}
+
+// Create emoji picker if it doesn't exist
+function createEmojiPicker() {
+    if (document.getElementById('emoji-picker')) {
+        return; // Emoji picker already exists
+    }
+    
+    // Create the emoji picker container
+    const emojiPicker = document.createElement('div');
+    emojiPicker.id = 'emoji-picker';
+    emojiPicker.className = 'emoji-picker';
+    emojiPicker.style.display = 'none';
+    
+    // Add common emojis
+    const commonEmojis = ['😊', '😂', '👍', '❤️', '🎉', '👋', '🙏', '👀', '✅', '⏰', '☕', '🤔', 
+                          '👏', '🔥', '💡', '💯', '🏆', '🎯', '🚀', '⚠️', '📝', '📞', '💬'];
+    
+    commonEmojis.forEach(emoji => {
+        const emojiBtn = document.createElement('span');
+        emojiBtn.className = 'emoji';
+        emojiBtn.textContent = emoji;
+        emojiBtn.addEventListener('click', () => {
+            insertEmoji(emoji);
+            toggleEmojiPicker(false);
+        });
+        emojiPicker.appendChild(emojiBtn);
+    });
+    
+    // Add the emoji picker to the chat input container
+    const chatInputContainer = document.querySelector('.chat-input-container');
+    if (chatInputContainer) {
+        chatInputContainer.appendChild(emojiPicker);
+        
+        // Add CSS for the emoji picker if not already present
+        if (!document.getElementById('emoji-picker-styles')) {
+            const style = document.createElement('style');
+            style.id = 'emoji-picker-styles';
+            style.textContent = `
+                .emoji-picker {
+                    position: absolute;
+                    bottom: 60px;
+                    left: 10px;
+                    background-color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+                    padding: 10px;
+                    z-index: 100;
+                    display: flex;
+                    flex-wrap: wrap;
+                    width: 280px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                }
+                .emoji {
+                    font-size: 22px;
+                    padding: 5px;
+                    cursor: pointer;
+                    transition: transform 0.1s, background-color 0.2s;
+                    border-radius: 5px;
+                }
+                .emoji:hover {
+                    transform: scale(1.2);
+                    background-color: #f0f0f0;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#emoji-btn') || e.target.closest('#emoji-picker')) {
+            return; // Clicked on emoji button or picker itself
+        }
+        
+        // Close the emoji picker
+        toggleEmojiPicker(false);
+    });
+}

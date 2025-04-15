@@ -119,6 +119,112 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Add file input elements for photos and emoji
+        const chatInputContainer = document.querySelector('.chat-input-container');
+        if (!document.getElementById('photo-upload') && chatInputContainer) {
+            // Create photo upload input
+            const photoUploadInput = document.createElement('input');
+            photoUploadInput.type = 'file';
+            photoUploadInput.id = 'photo-upload';
+            photoUploadInput.accept = 'image/*';
+            photoUploadInput.style.display = 'none';
+            photoUploadInput.addEventListener('change', handlePhotoUpload);
+            
+            // Add photo button
+            const photoBtn = document.createElement('button');
+            photoBtn.className = 'media-btn photo-btn';
+            photoBtn.innerHTML = '<i class="fas fa-image"></i>';
+            photoBtn.title = 'Send a photo';
+            photoBtn.addEventListener('click', () => photoUploadInput.click());
+            
+            // Add emoji button
+            const emojiBtn = document.createElement('button');
+            emojiBtn.className = 'media-btn emoji-btn';
+            emojiBtn.innerHTML = '<i class="fas fa-smile"></i>';
+            emojiBtn.title = 'Insert emoji';
+            emojiBtn.addEventListener('click', () => toggleEmojiPicker());
+            
+            // Insert buttons before the emoji button
+            chatInputContainer.insertBefore(photoBtn, chatInputContainer.firstChild);
+            chatInputContainer.insertBefore(emojiBtn, chatInputContainer.firstChild);
+            chatInputContainer.appendChild(photoUploadInput);
+            
+            // Add emoji picker div (hidden by default)
+            const emojiPicker = document.createElement('div');
+            emojiPicker.id = 'emoji-picker';
+            emojiPicker.className = 'emoji-picker';
+            emojiPicker.style.display = 'none';
+            
+            // Add common emojis
+            const commonEmojis = ['😊', '😂', '👍', '❤️', '🎉', '👋', '🙏', '👀', '✅', '⏰', '☕', '🤔'];
+            
+            commonEmojis.forEach(emoji => {
+                const emojiBtn = document.createElement('span');
+                emojiBtn.className = 'emoji';
+                emojiBtn.textContent = emoji;
+                emojiBtn.addEventListener('click', () => {
+                    insertEmoji(emoji);
+                    toggleEmojiPicker(false);
+                });
+                emojiPicker.appendChild(emojiBtn);
+            });
+            
+            chatInputContainer.appendChild(emojiPicker);
+            
+            // Add some styling
+            const style = document.createElement('style');
+            style.textContent = `
+                .media-btn {
+                    background: none;
+                    border: none;
+                    color: #6c757d;
+                    font-size: 1.1rem;
+                    cursor: pointer;
+                    transition: color 0.2s;
+                    padding: 6px;
+                    margin-right: 4px;
+                }
+                .media-btn:hover {
+                    color: #3498db;
+                }
+                .photo-btn:hover {
+                    color: #27ae60;
+                }
+                .emoji-btn:hover {
+                    color: #f1c40f;
+                }
+                .message-media {
+                    max-width: 100%;
+                    border-radius: 10px;
+                    margin-bottom: 5px;
+                    cursor: pointer;
+                }
+                .emoji-picker {
+                    position: absolute;
+                    bottom: 60px;
+                    left: 10px;
+                    background-color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+                    padding: 10px;
+                    z-index: 100;
+                    display: flex;
+                    flex-wrap: wrap;
+                    width: 200px;
+                }
+                .emoji {
+                    font-size: 20px;
+                    padding: 5px;
+                    cursor: pointer;
+                    transition: transform 0.1s;
+                }
+                .emoji:hover {
+                    transform: scale(1.2);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
         toggleMembersBtn.addEventListener('click', function() {
             chatMembers.classList.toggle('active');
             this.innerHTML = chatMembers.classList.contains('active') 
@@ -137,6 +243,41 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add seed messages if the chat is empty
         addSeedMessagesIfEmpty();
+    }
+    
+    // Toggle emoji picker
+    function toggleEmojiPicker(show) {
+        const emojiPicker = document.getElementById('emoji-picker');
+        if (!emojiPicker) return;
+        
+        if (show === undefined) {
+            // Toggle current state
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
+        } else {
+            // Set to specified state
+            emojiPicker.style.display = show ? 'flex' : 'none';
+        }
+    }
+    
+    // Insert emoji into chat input
+    function insertEmoji(emoji) {
+        const chatInput = document.getElementById('chat-input');
+        if (!chatInput) return;
+        
+        // Get cursor position
+        const startPos = chatInput.selectionStart;
+        const endPos = chatInput.selectionEnd;
+        
+        // Insert emoji at cursor position
+        const before = chatInput.value.substring(0, startPos);
+        const after = chatInput.value.substring(endPos, chatInput.value.length);
+        chatInput.value = before + emoji + after;
+        
+        // Move cursor after inserted emoji
+        chatInput.selectionStart = chatInput.selectionEnd = startPos + emoji.length;
+        
+        // Focus back on input
+        chatInput.focus();
     }
 
     // Add seed messages if this is a fresh chat
@@ -199,19 +340,37 @@ document.addEventListener('DOMContentLoaded', function() {
             userId = staffSelect.value;
         }
         
-        // Create message element
+        // Create message object
+        const msgObj = {
+            id: generateUniqueId(),
+            sender: userName,
+            role: 'staff',
+            text: messageText,
+            timestamp: new Date().toISOString(),
+            type: 'text'
+        };
+        
+        // Add to UI
         addMessageToChat('sent', messageText, userName);
         
-        // Store in local storage for persistence with the current user ID
-        storeChatMessage('sent', messageText, userName, userId);
+        // Store in local storage for persistence and cross-user sharing
+        storeChatMessage('text', messageText, userName, userId);
         
         // Clear input
         chatInput.value = '';
         
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Update last modified time to trigger update on admin side
+        localStorage.setItem('teamChatLastModified', new Date().toISOString());
     }
-
+    
+    // Generate a unique ID for messages
+    function generateUniqueId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
+    
     // Add message to chat display
     function addMessageToChat(type, text, sender) {
         const messageElement = document.createElement('div');
@@ -233,13 +392,17 @@ document.addEventListener('DOMContentLoaded', function() {
         let messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
         
         // Add new message
-        messages.push({
-            type: type,
+        const message = {
+            id: generateUniqueId(),
+            type: type === 'sent' ? 'text' : type,
             text: text,
             sender: sender,
+            role: 'staff',
             userId: userId || 'anonymous',
             timestamp: new Date().toISOString()
-        });
+        };
+        
+        messages.push(message);
         
         // Keep only last 100 messages
         if (messages.length > 100) {
@@ -248,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Store back in localStorage
         localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+        localStorage.setItem('teamChatLastModified', new Date().toISOString());
     }
 
     // Load chat history from local storage
@@ -265,16 +429,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
                 // Determine if this message is from the current user
-                const isCurrentUser = msg.userId === currentUserId;
+                const isCurrentUser = msg.userId === currentUserId || 
+                                     (msg.role === 'staff' && msg.sender === 'You');
                 const messageType = isCurrentUser ? 'sent' : 'received';
                 
                 const messageElement = document.createElement('div');
                 messageElement.className = `message ${messageType}`;
                 
-                messageElement.innerHTML = `
-                    <div class="message-bubble">${msg.text}</div>
-                    <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
-                `;
+                if (msg.type === 'photo') {
+                    messageElement.innerHTML = `
+                        <div class="message-bubble">
+                            <img src="${msg.media}" alt="Shared photo" class="message-media" onclick="window.open(this.src)">
+                        </div>
+                        <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
+                    `;
+                } else {
+                    messageElement.innerHTML = `
+                        <div class="message-bubble">${msg.text}</div>
+                        <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
+                    `;
+                }
                 
                 chatMessages.appendChild(messageElement);
             });
@@ -495,7 +669,7 @@ function checkForStaffUpdates() {
                     console.log('Staff list changed, updating dropdowns');
                     allStaffMembers = newStaffList;
                     populateStaffDropdowns(allStaffMembers);
-                    showToast('Staff list updated!');
+                    showToast('Staff list updated!', 'info');
                 } else {
                     // Check if any staff member details have changed
                     const hasChanges = newStaffList.some(newStaff => {
@@ -544,18 +718,18 @@ function handleStaffSelection() {
             staffIdNumber.textContent = `ID: ${selectedStaff.toUpperCase()}`;
             
             // Show welcome message and reload after delay
-            showToast(`Welcome, ${data.name}!`);
+            showToast(`Welcome, ${data.name}!`, 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         } else {
-            showToast('Error: ' + data.message);
+            showToast('Error: ' + data.message, 'error');
             staffIdBadge.style.display = 'none';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error selecting staff. Please try again.');
+        showToast('Error selecting staff. Please try again.', 'error');
         staffIdBadge.style.display = 'none';
     });
 }
@@ -741,26 +915,30 @@ function clockIn() {
             branchSelect.disabled = true;
             roleSelect.disabled = true;
             
-            // Show success message
-            showToast('Successfully clocked in!');
+            // Get branch and role names for better feedback
+            const branchName = document.querySelector(`#branch option[value="${branchSelect.value}"]`)?.textContent || 'selected branch';
+            const roleName = document.querySelector(`#role option[value="${roleSelect.value}"]`)?.textContent || 'selected role';
+            
+            // Show detailed success message
+            showToast(`Successfully clocked in at ${branchName} as ${roleName}!`, 'success');
             
             // Update shift count
             const currentShifts = parseInt(document.getElementById('shifts-count').textContent) || 0;
             document.getElementById('shifts-count').textContent = currentShifts + 1;
         } else {
-            showToast('Error: ' + data.message);
+            showToast('Error: ' + data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error clocking in. Please try again.');
+        showToast('Error clocking in. Please try again.', 'error');
     });
 }
 
 // Clock out function
 function clockOut() {
     if (!currentShiftId) {
-        showToast('No active shift found. Please refresh and try again.');
+        showToast('No active shift found. Please refresh and try again.', 'error');
         return;
     }
     
@@ -790,15 +968,18 @@ function clockOut() {
             branchSelect.disabled = false;
             roleSelect.disabled = false;
             
-            // Show success message
-            showToast('Successfully clocked out!');
+            // Format time for display
+            const clockOutTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Show detailed success message
+            showToast(`Successfully clocked out at ${clockOutTime}! Your shift has been recorded.`, 'success');
         } else {
-            showToast('Error: ' + data.message);
+            showToast('Error: ' + data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error clocking out. Please try again.');
+        showToast('Error clocking out. Please try again.', 'error');
     });
 }
 
@@ -929,12 +1110,12 @@ function loadUserShifts() {
                 }
             } else {
                 console.error("Error in API response:", data);
-                showToast('Error loading shifts');
+                showToast('Error loading shifts', 'error');
             }
         })
         .catch(error => {
             console.error('Error loading shifts:', error);
-            showToast('Error loading shifts. Please try again.');
+            showToast('Error loading shifts. Please try again.', 'error');
         });
 }
 
@@ -951,17 +1132,17 @@ function submitLeaveRequest() {
     const reason = document.getElementById('leave-reason').value;
     
     if (!startDate) {
-        showToast('Please select a start date.');
+        showToast('Please select a start date.', 'error');
         return;
     }
     
     if (!endDate) {
-        showToast('Please select an end date.');
+        showToast('Please select an end date.', 'error');
         return;
     }
     
     if (!reason) {
-        showToast('Please provide a reason for your leave.');
+        showToast('Please provide a reason for your leave.', 'error');
         return;
     }
     
@@ -990,15 +1171,24 @@ function submitLeaveRequest() {
             document.getElementById('end-date').value = '';
             document.getElementById('leave-reason').value = '';
             
-            // Show success message
-            showToast('Leave request submitted successfully!');
+            // Format dates for display
+            const formatDisplayDate = (dateStr) => {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+            };
+            
+            const formattedStart = formatDisplayDate(startDate);
+            const formattedEnd = formatDisplayDate(endDate);
+            
+            // Show detailed success message
+            showToast(`Leave request successfully submitted! Your request from ${formattedStart} to ${formattedEnd} awaits approval.`, 'success');
         } else {
-            showToast('Error: ' + data.message);
+            showToast('Error: ' + data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error submitting leave request.');
+        showToast('Error submitting leave request. Please try again.', 'error');
     });
 }
 
@@ -1009,17 +1199,17 @@ function submitShiftChangeRequest() {
     const reason = document.getElementById('swap-reason').value;
     
     if (!selectedShift) {
-        showToast('Please select a shift to swap.');
+        showToast('Please select a shift to swap.', 'error');
         return;
     }
     
     if (!targetUsername) {
-        showToast('Please select a staff member to swap with.');
+        showToast('Please select a staff member to swap with.', 'error');
         return;
     }
     
     if (!reason) {
-        showToast('Please provide a reason for the shift change.');
+        showToast('Please provide a reason for the shift change.', 'error');
         return;
     }
     
@@ -1028,6 +1218,12 @@ function submitShiftChangeRequest() {
         target_username: targetUsername,
         reason: reason
     };
+    
+    // Get target staff name
+    const targetName = document.querySelector(`#swap-with-staff option[value="${targetUsername}"]`)?.textContent || 'selected staff';
+    
+    // Get shift details
+    const selectedShiftText = document.querySelector(`#my-shift option[value="${selectedShift}"]`)?.textContent || 'selected shift';
     
     // Send shift change request
     fetch('/request_shift_change', {
@@ -1048,20 +1244,20 @@ function submitShiftChangeRequest() {
             document.getElementById('swap-with-staff').value = '';
             document.getElementById('swap-reason').value = '';
             
-            // Show success message
-            showToast('Shift change request submitted successfully!');
+            // Show detailed success message
+            showToast(`Shift change request submitted successfully! Your request to swap ${selectedShiftText} with ${targetName} awaits approval.`, 'success');
         } else {
-            showToast('Error: ' + data.message);
+            showToast('Error: ' + data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error submitting shift change request.');
+        showToast('Error submitting shift change request. Please try again.', 'error');
     });
 }
 
 // Show a toast message
-function showToast(message) {
+function showToast(message, type = 'info') {
     // Create toast container if it doesn't exist
     let toastContainer = document.getElementById('toast-container');
     
@@ -1078,39 +1274,78 @@ function showToast(message) {
     
     // Create toast element
     const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
+    toast.className = `toast toast-${type}`;
+    
+    // Set icon based on message type
+    let icon = '';
+    let bgColor = 'rgba(0, 0, 0, 0.8)';
+    let textColor = 'white';
+    
+    switch(type) {
+        case 'success':
+            icon = '<i class="fas fa-check-circle" style="margin-right: 8px; color: #2ecc71;"></i>';
+            bgColor = 'rgba(46, 204, 113, 0.9)';
+            break;
+        case 'error':
+            icon = '<i class="fas fa-exclamation-circle" style="margin-right: 8px; color: #e74c3c;"></i>';
+            bgColor = 'rgba(231, 76, 60, 0.9)';
+            break;
+        case 'warning':
+            icon = '<i class="fas fa-exclamation-triangle" style="margin-right: 8px; color: #f39c12;"></i>';
+            bgColor = 'rgba(243, 156, 18, 0.9)';
+            break;
+        case 'info':
+        default:
+            icon = '<i class="fas fa-info-circle" style="margin-right: 8px; color: #3498db;"></i>';
+            bgColor = 'rgba(52, 152, 219, 0.9)';
+            break;
+    }
+    
+    // Set toast content with icon
+    toast.innerHTML = `${icon}${message}`;
     
     // Style toast
-    toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    toast.style.color = 'white';
+    toast.style.backgroundColor = bgColor;
+    toast.style.color = textColor;
     toast.style.padding = '12px 20px';
-    toast.style.borderRadius = '25px';
+    toast.style.borderRadius = '10px';
     toast.style.marginBottom = '10px';
-    toast.style.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.2)';
-    toast.style.textAlign = 'center';
-    toast.style.minWidth = '200px';
-    toast.style.animation = 'fadeInOut 3s';
+    toast.style.boxShadow = '0 3px 15px rgba(0, 0, 0, 0.3)';
+    toast.style.textAlign = 'left';
+    toast.style.minWidth = '280px';
+    toast.style.maxWidth = '450px';
+    toast.style.animation = 'fadeInOut 4s';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.fontWeight = '500';
     
-    // Add animation styles
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
-        }
-    `;
-    document.head.appendChild(style);
+    // Add animation styles if not already added
+    if (!document.getElementById('toast-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animation-style';
+        style.innerHTML = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(20px); }
+                10% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
     
     // Append toast to container
     toastContainer.appendChild(toast);
     
     // Remove toast after animation
     setTimeout(() => {
-        toast.remove();
-    }, 3000);
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3700);
 }
 
 // Helper function to format date
@@ -1434,4 +1669,248 @@ function cleanupExpiredPlans() {
     }
     
     return hasChanges;
+}
+
+// Handle photo upload
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.match('image/*')) {
+        showToast('Please select an image file', 'error');
+        return;
+    }
+
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Image file size should not exceed 5MB', 'error');
+        return;
+    }
+
+    // Create a FileReader to read the file
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageData = e.target.result; // This is the base64 data URL
+        
+        // Get current user's name from the staff dropdown
+        const staffSelect = document.getElementById('staff');
+        let userName = 'You';
+        let userId = 'anonymous';
+        
+        if (staffSelect && staffSelect.selectedIndex > 0) {
+            userName = staffSelect.options[staffSelect.selectedIndex].text;
+            userId = staffSelect.value;
+        }
+        
+        // Create message element with image
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message sent';
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageElement.innerHTML = `
+            <div class="message-bubble">
+                <img src="${imageData}" alt="Shared photo" class="message-media" onclick="window.open(this.src)">
+            </div>
+            <div class="message-info">You • ${time}</div>
+        `;
+        
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(messageElement);
+        
+        // Store in local storage with the image data
+        storeChatMediaMessage('sent', 'photo', imageData, userName, userId);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    
+    // Read the file as a data URL (base64)
+    reader.readAsDataURL(file);
+    
+    // Reset the file input
+    event.target.value = '';
+}
+
+// Store a chat message with media content in local storage
+function storeChatMediaMessage(type, mediaType, mediaData, sender, userId) {
+    // Get existing messages
+    let messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+    
+    // Add new message with media
+    messages.push({
+        type: type,
+        messageType: mediaType, // 'photo' or 'video'
+        media: mediaData,
+        sender: sender,
+        userId: userId || 'anonymous',
+        timestamp: new Date().toISOString()
+    });
+    
+    // Keep only last 50 messages to prevent localStorage from getting too full
+    // Media messages take up more space than text messages
+    if (messages.length > 50) {
+        messages = messages.slice(messages.length - 50);
+    }
+    
+    // Store back in localStorage
+    localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+}
+
+// Lateness settings functionality
+const latenessSettingsBtn = document.getElementById('lateness-settings-btn');
+const latenessSettingsModal = document.getElementById('lateness-settings-modal');
+const saveLatencySettingsBtn = document.getElementById('save-lateness-settings');
+
+// Default lateness settings
+let latenessSettings = {
+    startHour: 9,
+    startMinute: 0,
+    startPeriod: 'AM',
+    alertBeforeShift: true,
+    minutesBefore: 15,
+    alertLate: true,
+    alertSound: false,
+    alertStyle: 'modern'
+};
+
+// Load settings from localStorage if available
+function loadLatenessSettings() {
+    const storedSettings = localStorage.getItem('latenessSettings');
+    if (storedSettings) {
+        latenessSettings = JSON.parse(storedSettings);
+        
+        // Update UI with stored settings
+        document.getElementById('shift-start-hour').value = latenessSettings.startHour;
+        document.getElementById('shift-start-minute').value = latenessSettings.startMinute;
+        document.getElementById('shift-start-period').value = latenessSettings.startPeriod;
+        document.getElementById('alert-before-shift').checked = latenessSettings.alertBeforeShift;
+        document.getElementById('minutes-before').value = latenessSettings.minutesBefore;
+        document.getElementById('alert-late').checked = latenessSettings.alertLate;
+        document.getElementById('alert-sound').checked = latenessSettings.alertSound;
+        
+        // Select the correct alert style option
+        document.querySelectorAll('.alert-style-option').forEach(option => {
+            if (option.getAttribute('data-style') === latenessSettings.alertStyle) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+    }
+}
+
+// Save lateness settings
+function saveLatesnessSettings() {
+    // Get values from form
+    latenessSettings.startHour = parseInt(document.getElementById('shift-start-hour').value) || 9;
+    latenessSettings.startMinute = parseInt(document.getElementById('shift-start-minute').value) || 0;
+    latenessSettings.startPeriod = document.getElementById('shift-start-period').value;
+    latenessSettings.alertBeforeShift = document.getElementById('alert-before-shift').checked;
+    latenessSettings.minutesBefore = parseInt(document.getElementById('minutes-before').value) || 15;
+    latenessSettings.alertLate = document.getElementById('alert-late').checked;
+    latenessSettings.alertSound = document.getElementById('alert-sound').checked;
+    
+    // Get selected alert style
+    const selectedStyle = document.querySelector('.alert-style-option.selected');
+    if (selectedStyle) {
+        latenessSettings.alertStyle = selectedStyle.getAttribute('data-style');
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('latenessSettings', JSON.stringify(latenessSettings));
+    
+    // Close modal
+    latenessSettingsModal.style.display = 'none';
+    
+    // Show confirmation
+    showToast('Lateness settings saved!');
+}
+
+// Enhanced checkShiftTime function using user settings
+function checkShiftTimeSetting() {
+    const alerts = document.getElementById('alerts-container');
+    
+    // Get current date and time
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Use settings for shift start time
+    let shiftStartHour = latenessSettings.startHour;
+    
+    // Convert 12-hour format to 24-hour if needed
+    if (latenessSettings.startPeriod === 'PM' && shiftStartHour < 12) {
+        shiftStartHour += 12;
+    } else if (latenessSettings.startPeriod === 'AM' && shiftStartHour === 12) {
+        shiftStartHour = 0;
+    }
+    
+    const shiftStartMinute = latenessSettings.startMinute;
+    
+    // Calculate time difference in minutes
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+    const shiftTimeInMinutes = shiftStartHour * 60 + shiftStartMinute;
+    const diffMinutes = shiftTimeInMinutes - currentTimeInMinutes;
+    
+    alerts.innerHTML = '';
+    
+    // Alert before shift if enabled and time matches
+    if (latenessSettings.alertBeforeShift && diffMinutes > 0 && diffMinutes <= latenessSettings.minutesBefore) {
+        const alertHTML = generateAlert('warning', `Your shift starts in ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}. Please be ready!`);
+        alerts.innerHTML = alertHTML;
+        
+        // Play alert sound if enabled
+        if (latenessSettings.alertSound) {
+            playAlertSound();
+        }
+    } 
+    // Alert when late if enabled
+    else if (latenessSettings.alertLate && diffMinutes < 0 && diffMinutes >= -30) {
+        const alertHTML = generateAlert('alert', `You're ${Math.abs(diffMinutes)} minute${Math.abs(diffMinutes) > 1 ? 's' : ''} late for your shift!`);
+        alerts.innerHTML = alertHTML;
+        
+        // Play alert sound if enabled
+        if (latenessSettings.alertSound) {
+            playAlertSound();
+        }
+    }
+}
+
+// Generate alert HTML based on selected style
+function generateAlert(type, message) {
+    switch(latenessSettings.alertStyle) {
+        case 'standard':
+            return `
+                <div class="${type === 'alert' ? 'alert-container' : 'warning-container'}">
+                    <div class="alert-icon"><i class="fas fa-${type === 'alert' ? 'exclamation-circle' : 'exclamation-triangle'}"></i></div>
+                    <div class="alert-message">${message}</div>
+                </div>
+            `;
+        
+        case 'minimal':
+            return `
+                <div class="${type === 'alert' ? 'alert-container' : 'warning-container'}" style="background:transparent; border:none; padding:8px 5px;">
+                    <div class="alert-icon"><i class="fas fa-${type === 'alert' ? 'exclamation-circle' : 'exclamation-triangle'}"></i></div>
+                    <div class="alert-message">${message}</div>
+                </div>
+            `;
+        
+        case 'modern':
+        default:
+            return `
+                <div class="${type === 'alert' ? 'alert-container' : 'warning-container'}" style="border-radius:20px; border-left:none; box-shadow:0 3px 10px rgba(${type === 'alert' ? '231,76,60' : '241,196,15'},0.2);">
+                    <div class="alert-icon"><i class="fas fa-${type === 'alert' ? 'exclamation-circle' : 'exclamation-triangle'}"></i></div>
+                    <div class="alert-message">${message}</div>
+                </div>
+            `;
+    }
+}
+
+// Play a sound for alerts
+function playAlertSound() {
+    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-simple-alert-tone-1052.mp3');
+    audio.volume = 0.5; // Lower volume to be less intrusive
+    audio.play().catch(e => console.log('Audio could not play: ', e));
 }

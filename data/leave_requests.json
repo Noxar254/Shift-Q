@@ -30,7 +30,33 @@
         "start_date": "2025-04-16",
         "end_date": "2025-04-24",
         "reason": "sick",
-        "status": "pending",
-        "submitted_on": "2025-04-15 20:20:18"
+        "status": "rejected",
+        "submitted_on": "2025-04-15 20:20:18",
+        "reviewed_by": "admin",
+        "reviewed_on": "2025-04-15 21:42:22"
+    },
+    {
+        "id": "dba85258-31bb-4a2d-9170-068ac93bd7bf",
+        "username": "jane",
+        "name": "Jane Smith",
+        "start_date": "2025-04-14",
+        "end_date": "2025-04-24",
+        "reason": "hello",
+        "status": "approved",
+        "submitted_on": "2025-04-15 20:46:52",
+        "reviewed_by": "admin",
+        "reviewed_on": "2025-04-15 21:42:26"
+    },
+    {
+        "id": "b1124d56-e239-4cd8-8741-547bb146855a",
+        "username": "john",
+        "name": "John Doe",
+        "start_date": "2025-04-16",
+        "end_date": "2025-04-16",
+        "reason": "jhgkgjglk",
+        "status": "approved",
+        "submitted_on": "2025-04-15 22:12:24",
+        "reviewed_by": "admin",
+        "reviewed_on": "2025-04-15 22:40:18"
     }
 ]
