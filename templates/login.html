@@ -11,65 +11,62 @@
         /* Portal Landing Page Styles */
         body {
             margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            font-family: 'Roboto', sans-serif;
         }
         
         .portal-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            perspective: 1000px;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
         }
         
         .portal-card {
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 20px;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            width: 90%;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 30px 20px;
+            width: 100%;
             max-width: 500px;
             text-align: center;
             position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(5deg) rotateY(0deg);
-            transition: transform 0.5s ease;
-            overflow: hidden;
+            overflow: visible;
             z-index: 1;
-        }
-        
-        .portal-card:hover {
-            transform: rotateX(0deg) rotateY(0deg);
+            margin: 0 auto;
         }
         
         .portal-header h1 {
-            font-size: 3.5rem;
+            font-size: clamp(2rem, 6vw, 3.5rem);
             background: linear-gradient(90deg, #4c6ef5, #6a11cb);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 5px;
+            line-height: 1.1;
         }
         
         .portal-header p {
-            color: var(--gray-color);
-            margin-bottom: 25px;
-            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
         }
         
         .date-time-display {
-            margin: 20px 0 30px;
+            margin: 15px 0 25px;
         }
         
         .date-time-display #current-date {
-            font-size: 1.1rem;
-            color: var(--dark-color);
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: #333;
             margin-bottom: 5px;
         }
         
         .date-time-display #current-time {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: bold;
             background: linear-gradient(90deg, #4c6ef5, #6a11cb);
             -webkit-background-clip: text;
@@ -83,54 +80,39 @@
             color: white;
             border: none;
             border-radius: 30px;
-            font-size: 1.2rem;
-            padding: 15px 40px;
-            margin-top: 20px;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            padding: 12px 30px;
+            margin-top: 15px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
             position: relative;
             overflow: hidden;
             text-decoration: none;
+            width: auto;
+            max-width: 100%;
         }
         
         .portal-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 25px rgba(106, 17, 203, 0.4);
-        }
-        
-        .portal-btn::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #4c6ef5, #6a11cb);
-            border-radius: 30px;
-            opacity: 0;
-            z-index: -1;
-            transition: opacity 0.3s;
-        }
-        
-        .portal-btn:hover::after {
-            opacity: 0.6;
+            box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
         }
         
         .portal-footer {
-            margin-top: 40px;
-            color: var(--gray-color);
-            font-size: 0.9rem;
+            margin-top: 30px;
+            color: #777;
+            font-size: 0.85rem;
         }
         
         /* Floating particles */
         .particles {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 0;
+            pointer-events: none;
         }
         
         .particle {
@@ -159,80 +141,37 @@
         
         .portal-glow {
             position: absolute;
-            width: 150%;
-            height: 150%;
-            background: radial-gradient(circle, rgba(76, 110, 245, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(76, 110, 245, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: -1;
-            animation: pulse 4s infinite ease-in-out;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 0.7;
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 0.7;
-            }
+            pointer-events: none;
         }
         
         .portal-icon {
-            font-size: 3rem;
-            margin: 20px 0;
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin: 15px 0;
             background: linear-gradient(45deg, #4c6ef5, #6a11cb);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: spin 10s infinite linear;
             display: inline-block;
-        }
-        
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        
-        /* Portal enter animation */
-        .portal-enter {
-            animation: portalOpen 1.5s forwards ease-out;
-        }
-        
-        @keyframes portalOpen {
-            0% {
-                transform: scale(0.7) rotateX(45deg);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.05) rotateX(10deg);
-                opacity: 0.9;
-            }
-            100% {
-                transform: scale(1) rotateX(5deg);
-                opacity: 1;
-            }
         }
         
         .portal-actions {
             display: flex;
-            gap: 20px;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            margin-top: 30px;
+            gap: 15px;
+            margin-top: 20px;
         }
         
         .admin-link {
-            color: var(--primary-color);
+            color: #4c6ef5;
             font-size: 0.9rem;
             text-decoration: none;
             opacity: 0.7;
@@ -243,13 +182,111 @@
             opacity: 1;
             text-decoration: underline;
         }
+
+        /* Login form styles */
+        .login-form {
+            margin: 20px auto;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid rgba(76, 110, 245, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            background-color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .login-form input:focus {
+            border-color: #4c6ef5;
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 5px 15px rgba(76, 110, 245, 0.2);
+        }
+
+        .login-form .form-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6a11cb;
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            padding-left: 40px;
+        }
+
+        .form-toggle {
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #4c6ef5;
+            cursor: pointer;
+        }
+        
+        .form-toggle:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background-color: rgba(255, 0, 0, 0.1);
+            color: #d32f2f;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Toggle between Enter Portal button and Login Form */
+        #login-form {
+            display: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .portal-card {
+                padding: 20px 15px;
+                margin: 10px;
+            }
+            
+            .portal-header h1 {
+                margin-top: 0;
+            }
+            
+            .portal-icon {
+                margin: 10px 0;
+            }
+            
+            .date-time-display {
+                margin: 10px 0 20px;
+            }
+            
+            .portal-btn {
+                padding: 10px 25px;
+                font-size: 1rem;
+            }
+            
+            .portal-footer {
+                margin-top: 20px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="particles" id="particles"></div>
     
     <div class="portal-container">
-        <div class="portal-card portal-enter">
+        <div class="portal-card">
             <div class="portal-glow"></div>
             
             <div class="portal-header">
@@ -270,10 +307,34 @@
             </div>
             {% endif %}
             
-            <div class="portal-actions">
-                <a href="{{ url_for('staff_dashboard') }}" class="portal-btn">
-                    <i class="fas fa-sign-in-alt"></i> Enter Staff Portal
-                </a>
+            <div id="enter-portal">
+                <div class="portal-actions">
+                    <button id="show-login-btn" class="portal-btn">
+                        <i class="fas fa-sign-in-alt"></i> Enter Portal
+                    </button>
+                </div>
+                <div class="form-toggle" id="login-toggle">
+                    Have an account? <span id="toggle-login">Login</span>
+                </div>
+            </div>
+
+            <div id="login-form" class="login-form">
+                <form method="POST" action="{{ url_for('staff_auth') }}">
+                    <div class="form-group">
+                        <i class="fas fa-user form-icon"></i>
+                        <input type="text" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-lock form-icon"></i>
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="portal-btn">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+                <div class="form-toggle">
+                    <span id="toggle-enter-portal">Go back</span>
+                </div>
             </div>
             
             <div class="portal-footer">
@@ -287,14 +348,14 @@
     <script>
         // Create floating particles
         const particlesContainer = document.getElementById('particles');
-        const particleCount = 20;
+        const particleCount = 15; // Reduced count for performance
         
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
             particle.className = 'particle';
             
-            // Random size between 5px and 20px
-            const size = Math.random() * 15 + 5;
+            // Random size between 5px and 15px
+            const size = Math.random() * 10 + 5;
             particle.style.width = `${size}px`;
             particle.style.height = `${size}px`;
             
@@ -312,6 +373,22 @@
             
             particlesContainer.appendChild(particle);
         }
+
+        // Toggle between Enter Portal and Login Form
+        document.getElementById('show-login-btn').addEventListener('click', function() {
+            document.getElementById('enter-portal').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        });
+
+        document.getElementById('toggle-login').addEventListener('click', function() {
+            document.getElementById('enter-portal').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        });
+
+        document.getElementById('toggle-enter-portal').addEventListener('click', function() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('enter-portal').style.display = 'block';
+        });
     </script>
 </body>
 </html>

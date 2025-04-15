@@ -90,6 +90,8 @@ def get_location_name(lat, lng):
 def index():
     if 'username' in session and session.get('user_role') == 'admin':
         return redirect(url_for('admin_dashboard'))
+    elif 'username' in session and session.get('user_role') == 'staff':
+        return redirect(url_for('staff_dashboard'))
     
     # Show portal landing page
     return render_template('login.html')
@@ -113,6 +115,20 @@ def admin_auth():
     
     return render_template('admin_login.html', error="Invalid administrator credentials")
 
+@app.route('/staff_auth', methods=['POST'])
+def staff_auth():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    users = load_data(STAFF_FILE)
+    
+    if username in users and users[username]['role'] == 'staff' and users[username]['password'] == password:
+        session['username'] = username
+        session['user_role'] = 'staff'
+        session['name'] = users[username]['name']
+        return redirect(url_for('staff_dashboard'))
+    
+    return render_template('login.html', error="Invalid staff credentials")
+
 @app.route('/logout')
 def logout():
     session.pop('username', None)
@@ -122,11 +138,9 @@ def logout():
 
 @app.route('/staff_dashboard')
 def staff_dashboard():
-    # Staff can now select their name from a dropdown
-    if 'username' not in session or session['username'] == 'guest':
-        session['username'] = 'guest'
-        session['user_role'] = 'staff'
-        session['name'] = 'Select Your Name'
+    # Check if user is authenticated
+    if 'username' not in session:
+        return redirect(url_for('index'))
     
     # Load required data for the staff dashboard
     branches = load_data(BRANCHES_FILE)
