@@ -1,0 +1,23 @@
+[
+    {
+        "id": "cc41e3d7-33d3-4982-85a0-286db97ba7ec",
+        "requesting_username": "jane",
+        "requesting_name": "Jane Smith",
+        "shift_id": "3f549c9f-ecc3-4778-acc5-dccfb2b07874",
+        "shift_details": {
+            "date": "2025-04-15",
+            "time": "10:55:44",
+            "branch": "West Coast",
+            "role": "Associate"
+        },
+        "target_username": "john",
+        "target_name": "John Doe",
+        "target_shift_id": null,
+        "target_shift_details": null,
+        "reason": "am going for medical checkup",
+        "status": "pending",
+        "target_accepted": false,
+        "admin_approved": false,
+        "submitted_on": "2025-04-15 14:28:26"
+    }
+]

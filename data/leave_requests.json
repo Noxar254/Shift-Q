@@ -1,0 +1,14 @@
+[
+    {
+        "id": "57a9783c-6aa3-436c-b290-4125710206c0",
+        "username": "john",
+        "name": "John Doe",
+        "start_date": "2025-04-15",
+        "end_date": "2025-04-15",
+        "reason": "hello i need rest",
+        "status": "approved",
+        "submitted_on": "2025-04-15 10:22:04",
+        "reviewed_by": "admin",
+        "reviewed_on": "2025-04-15 10:42:28"
+    }
+]

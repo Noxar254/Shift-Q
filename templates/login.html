@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Q - Staff Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Portal Landing Page Styles */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        
+        .portal-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 1000px;
+        }
+        
+        .portal-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(5deg) rotateY(0deg);
+            transition: transform 0.5s ease;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .portal-card:hover {
+            transform: rotateX(0deg) rotateY(0deg);
+        }
+        
+        .portal-header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(90deg, #4c6ef5, #6a11cb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        
+        .portal-header p {
+            color: var(--gray-color);
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+        }
+        
+        .date-time-display {
+            margin: 20px 0 30px;
+        }
+        
+        .date-time-display #current-date {
+            font-size: 1.1rem;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+        
+        .date-time-display #current-time {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #4c6ef5, #6a11cb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .portal-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #4c6ef5, #6a11cb);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+        
+        .portal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(106, 17, 203, 0.4);
+        }
+        
+        .portal-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #4c6ef5, #6a11cb);
+            border-radius: 30px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+        
+        .portal-btn:hover::after {
+            opacity: 0.6;
+        }
+        
+        .portal-footer {
+            margin-top: 40px;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        /* Floating particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+        
+        .portal-glow {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(76, 110, 245, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse 4s infinite ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.7;
+            }
+        }
+        
+        .portal-icon {
+            font-size: 3rem;
+            margin: 20px 0;
+            background: linear-gradient(45deg, #4c6ef5, #6a11cb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: spin 10s infinite linear;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* Portal enter animation */
+        .portal-enter {
+            animation: portalOpen 1.5s forwards ease-out;
+        }
+        
+        @keyframes portalOpen {
+            0% {
+                transform: scale(0.7) rotateX(45deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05) rotateX(10deg);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1) rotateX(5deg);
+                opacity: 1;
+            }
+        }
+        
+        .portal-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .admin-link {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .admin-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="portal-container">
+        <div class="portal-card portal-enter">
+            <div class="portal-glow"></div>
+            
+            <div class="portal-header">
+                <h1>Shift Q</h1>
+                <p>Staff Management System</p>
+            </div>
+            
+            <i class="fas fa-clock portal-icon"></i>
+            
+            <div class="date-time-display">
+                <div id="current-date"></div>
+                <div id="current-time"></div>
+            </div>
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <div class="portal-actions">
+                <a href="{{ url_for('staff_dashboard') }}" class="portal-btn">
+                    <i class="fas fa-sign-in-alt"></i> Enter Staff Portal
+                </a>
+            </div>
+            
+            <div class="portal-footer">
+                <p>© 2025 Shift Q Management System</p>
+                <a href="{{ url_for('admin_login') }}" class="admin-link">Admin Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
+    <script>
+        // Create floating particles
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 20;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // Random size between 5px and 20px
+            const size = Math.random() * 15 + 5;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Random position
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            
+            // Random animation duration between 10s and 30s
+            const duration = Math.random() * 20 + 10;
+            particle.style.animationDuration = `${duration}s`;
+            
+            // Random animation delay
+            const delay = Math.random() * 10;
+            particle.style.animationDelay = `${delay}s`;
+            
+            particlesContainer.appendChild(particle);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Shift Q</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Admin Login Page Styles */
+        body {
+            margin: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .admin-login-container {
+            width: 90%;
+            max-width: 450px;
+        }
+        
+        .admin-login-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .admin-login-header {
+            margin-bottom: 30px;
+        }
+        
+        .admin-login-header h1 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .admin-login-header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .admin-icon {
+            font-size: 3rem;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        
+        .date-time-display {
+            margin-bottom: 25px;
+        }
+        
+        .date-time-display #current-date {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .date-time-display #current-time {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .admin-login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #f8fafc;
+        }
+        
+        .form-group input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .btn-admin-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn-admin-login:hover {
+            background-color: #2980b9;
+        }
+        
+        .admin-login-footer {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        
+        .back-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-card">
+            <div class="admin-login-header">
+                <i class="fas fa-user-shield admin-icon"></i>
+                <h1>Admin Login</h1>
+                <p>Shift Q Management System</p>
+            </div>
+            
+            <div class="date-time-display">
+                <div id="current-date"></div>
+                <div id="current-time"></div>
+            </div>
+            
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <form class="admin-login-form" action="{{ url_for('admin_auth') }}" method="post">
+                <div class="form-group">
+                    <label for="username">Administrator Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-admin-login">Login</button>
+            </form>
+            
+            <div class="admin-login-footer">
+                <p>© 2025 Shift Q Management System</p>
+                <a href="{{ url_for('index') }}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to Staff Portal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
+</body>
+</html>

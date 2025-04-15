@@ -1,0 +1,14 @@
+{
+    "branch1": {
+        "name": "Headquarters",
+        "location": "New York"
+    },
+    "branch2": {
+        "name": "Downtown Office",
+        "location": "Chicago"
+    },
+    "branch3": {
+        "name": "West Coast",
+        "location": "San Francisco"
+    }
+}

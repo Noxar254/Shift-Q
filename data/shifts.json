@@ -1,0 +1,150 @@
+[
+    {
+        "id": "c55df288-efec-46d9-b7c8-4bc6f629d677",
+        "username": "guest",
+        "name": "Staff Member",
+        "branch": "Headquarters",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 09:54:33",
+        "clock_out_time": "2025-04-15 10:06:22",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Location service unavailable"
+        }
+    },
+    {
+        "id": "d43198be-0335-4a38-9e36-aa75858e7431",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Downtown Office",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 10:19:57",
+        "clock_out_time": "2025-04-15 10:24:10",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Location service unavailable"
+        }
+    },
+    {
+        "id": "f810839e-5063-4729-9750-69a20bf9bef1",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Downtown Office",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 10:20:05",
+        "clock_out_time": "2025-04-15 11:29:44",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        }
+    },
+    {
+        "id": "3f549c9f-ecc3-4778-acc5-dccfb2b07874",
+        "username": "jane",
+        "name": "Jane Smith",
+        "branch": "West Coast",
+        "role": "Associate",
+        "clock_in_time": "2025-04-15 10:55:44",
+        "clock_out_time": "2025-04-15 10:56:39",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        }
+    },
+    {
+        "id": "11bb2c69-83ea-45f4-bfa5-edbf3c8edf76",
+        "username": "admin",
+        "name": "Administrator",
+        "branch": "Downtown Office",
+        "role": "Associate",
+        "clock_in_time": "2025-04-15 11:41:49",
+        "clock_out_time": "2025-04-15 11:41:59",
+        "clock_in_location": {
+            "latitude": -1.2652077,
+            "longitude": 36.8050861,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        }
+    },
+    {
+        "id": "460ba6e1-a87b-4b75-a061-0658aa6b14e8",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Headquarters",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 11:52:44",
+        "clock_out_time": "2025-04-15 12:17:38",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        }
+    },
+    {
+        "id": "8801175f-5cb0-46d2-8a11-d244c376b157",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Downtown Office",
+        "role": "Supervisor",
+        "clock_in_time": "2025-04-15 12:17:52",
+        "clock_out_time": "2025-04-15 14:21:56",
+        "clock_in_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.3303808,
+            "longitude": 36.7263744,
+            "address": "Karen C, Karen ward, Lang'ata, Nairobi, 00505, Kenya"
+        }
+    },
+    {
+        "id": "c214d4e8-5407-4ead-942e-79ac8ca5b9ef",
+        "username": "jane",
+        "name": "Jane Smith",
+        "branch": "Headquarters",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 15:31:58",
+        "clock_out_time": null,
+        "clock_in_location": {
+            "latitude": -1.2652105,
+            "longitude": 36.8050907,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        },
+        "clock_out_location": null
+    }
+]

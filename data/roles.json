@@ -1,0 +1,11 @@
+{
+    "manager": {
+        "name": "Manager"
+    },
+    "supervisor": {
+        "name": "Supervisor"
+    },
+    "associate": {
+        "name": "Associate"
+    }
+}
