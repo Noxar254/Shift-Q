@@ -10,5 +10,27 @@
         "submitted_on": "2025-04-15 10:22:04",
         "reviewed_by": "admin",
         "reviewed_on": "2025-04-15 10:42:28"
+    },
+    {
+        "id": "5367dea9-0b5a-4c68-ba92-6ce1fc527458",
+        "username": "john",
+        "name": "John Doe",
+        "start_date": "2025-04-15",
+        "end_date": "2025-04-17",
+        "reason": "am tired ",
+        "status": "rejected",
+        "submitted_on": "2025-04-15 16:40:17",
+        "reviewed_by": "admin",
+        "reviewed_on": "2025-04-15 16:41:11"
+    },
+    {
+        "id": "3979c124-d53f-4878-b4db-05000d061b33",
+        "username": "john",
+        "name": "John Doe",
+        "start_date": "2025-04-16",
+        "end_date": "2025-04-24",
+        "reason": "sick",
+        "status": "pending",
+        "submitted_on": "2025-04-15 20:20:18"
     }
 ]

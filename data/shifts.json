@@ -146,5 +146,35 @@
             "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
         },
         "clock_out_location": null
+    },
+    {
+        "id": "a10207da-8af7-49c0-b8cf-f6048a2d263c",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Headquarters",
+        "role": "Manager",
+        "clock_in_time": "2025-04-15 17:37:12",
+        "clock_out_time": null,
+        "clock_in_location": {
+            "latitude": -1.2652046,
+            "longitude": 36.8051055,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        },
+        "clock_out_location": null
+    },
+    {
+        "id": "5703e010-08f4-4f4a-b86f-0755ef2d0e30",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Downtown Office",
+        "role": "Supervisor",
+        "clock_in_time": "2025-04-15 20:19:36",
+        "clock_out_time": null,
+        "clock_in_location": {
+            "latitude": -1.2826422,
+            "longitude": 36.969811,
+            "address": "Utawala, Njiru, Nairobi, 00520, Kenya"
+        },
+        "clock_out_location": null
     }
 ]

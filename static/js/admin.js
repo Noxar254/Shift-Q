@@ -46,6 +46,18 @@ const performanceTable = document.getElementById('performance-table');
 const insightsPeriodFilter = document.getElementById('insights-period-filter');
 const insightsBranchFilter = document.getElementById('insights-branch-filter');
 
+// Chat related DOM elements
+const chatBtn = document.getElementById('chat-btn');
+const chatModal = document.getElementById('chat-modal');
+const closeChatBtn = document.getElementById('close-chat-btn');
+const sendChatBtn = document.getElementById('send-chat-btn');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+const chatNotification = document.getElementById('chat-notification');
+const toggleMembersBtn = document.getElementById('toggle-members-btn');
+const chatMembers = document.getElementById('chat-members');
+const membersList = document.getElementById('members-list');
+
 // Global variables for data management
 let allStaff = [];
 let allShifts = [];
@@ -138,6 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Initialize team chat
+    initializeChat();
 });
 
 // Set up tab navigation
@@ -2056,3 +2071,469 @@ function sendUpdateToStaffPortal(updateType, data) {
     
     console.log(`Update sent to staff portal: ${updateType}`, data);
 }
+
+// Initialize chat functionality
+function initializeChat() {
+    if (!chatBtn || !chatModal) return;
+    
+    chatBtn.addEventListener('click', function() {
+        chatModal.style.display = 'flex';
+        chatNotification.style.display = 'none';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    closeChatBtn.addEventListener('click', function() {
+        chatModal.style.display = 'none';
+    });
+
+    sendChatBtn.addEventListener('click', sendMessage);
+    
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    toggleMembersBtn.addEventListener('click', function() {
+        chatMembers.classList.toggle('active');
+        this.innerHTML = chatMembers.classList.contains('active') 
+            ? 'Hide Team Members <i class="fas fa-chevron-up"></i>' 
+            : 'Show Team Members Online <i class="fas fa-chevron-down"></i>';
+    });
+    
+    // Load chat history from local storage
+    loadChatHistory();
+    
+    // Load team members
+    loadTeamMembers();
+    
+    // Simulate receiving a message for demo purposes
+    setTimeout(function() {
+        receiveMessage('John Doe', 'Hello! Any updates for today?');
+    }, 3000);
+}
+
+// Send a chat message
+function sendMessage() {
+    const messageText = chatInput.value.trim();
+    if (!messageText) return;
+    
+    // Get current user's name
+    const userName = document.querySelector('.user-info span').textContent.replace('Welcome, ', '');
+    
+    // Create message element
+    addMessageToChat('sent', messageText, userName);
+    
+    // Store in local storage for persistence
+    storeChatMessage('sent', messageText, userName);
+    
+    // Clear input
+    chatInput.value = '';
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Simulate admin response for demo
+    simulateResponse(messageText);
+}
+
+// Add message to chat display
+function addMessageToChat(type, text, sender) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${type}`;
+    
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    messageElement.innerHTML = `
+        <div class="message-bubble">${text}</div>
+        <div class="message-info">${type === 'sent' ? 'You' : `<span class="online-status"></span> ${sender}`} • ${time}</div>
+    `;
+    
+    chatMessages.appendChild(messageElement);
+}
+
+// Store chat message in local storage
+function storeChatMessage(type, text, sender) {
+    // Get existing messages
+    let messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+    
+    // Add new message
+    messages.push({
+        type: type,
+        text: text,
+        sender: sender,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Keep only last 50 messages
+    if (messages.length > 50) {
+        messages = messages.slice(messages.length - 50);
+    }
+    
+    // Store back in localStorage
+    localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+}
+
+// Load chat history from local storage
+function loadChatHistory() {
+    const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+    
+    if (messages.length > 0) {
+        chatMessages.innerHTML = '';
+        
+        messages.forEach(msg => {
+            const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${msg.type}`;
+            
+            messageElement.innerHTML = `
+                <div class="message-bubble">${msg.text}</div>
+                <div class="message-info">${msg.type === 'sent' ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
+            `;
+            
+            chatMessages.appendChild(messageElement);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+// Receive message (simulated or from websocket in real implementation)
+function receiveMessage(sender, text) {
+    // Add message to chat
+    addMessageToChat('received', text, sender);
+    
+    // Store in local storage
+    storeChatMessage('received', text, sender);
+    
+    // Show notification if chat is closed
+    if (chatModal.style.display !== 'flex') {
+        chatNotification.style.display = 'flex';
+        chatNotification.textContent = '1';
+    }
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Load team members for chat
+function loadTeamMembers() {
+    // In a real app, fetch this from server
+    // For this demo, we'll use the staff list
+    if (!membersList) return;
+    
+    const members = [
+        { name: 'John Doe', status: 'online', initial: 'JD' },
+        { name: 'Jane Smith', status: 'online', initial: 'JS' },
+        { name: 'Michael Brown', status: 'offline', initial: 'MB' },
+        { name: 'Sarah Johnson', status: 'online', initial: 'SJ' },
+        { name: 'David Wilson', status: 'offline', initial: 'DW' }
+    ];
+    
+    let html = '';
+    
+    members.forEach(member => {
+        html += `
+            <div class="member-item">
+                <div class="member-avatar">${member.initial}</div>
+                <div class="member-name">${member.name}</div>
+                <div class="member-status ${member.status}">${member.status}</div>
+            </div>
+        `;
+    });
+    
+    membersList.innerHTML = html;
+}
+
+// Simulate responses for demo purposes
+function simulateResponse(message) {
+    // Simple AI-like responses for demo
+    setTimeout(() => {
+        const lowerMessage = message.toLowerCase();
+        let response = '';
+        
+        if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+            response = "Hello! How can I help you today?";
+        }
+        else if (lowerMessage.includes('shift') || lowerMessage.includes('schedule')) {
+            response = "I've updated the shift schedule for next week. Please check your dashboard.";
+        }
+        else if (lowerMessage.includes('leave') || lowerMessage.includes('day off') || lowerMessage.includes('vacation')) {
+            response = "Please submit your leave request through the system and I'll approve it promptly.";
+        }
+        else if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+            response = "I'm here to help! What specific issue are you having?";
+        }
+        else if (lowerMessage.includes('thanks') || lowerMessage.includes('thank you')) {
+            response = "You're welcome! Let me know if you need anything else.";
+        }
+        else {
+            response = "I've received your message and will get back to you shortly.";
+        }
+        
+        // Randomly select a team member to respond
+        const respondingStaff = ['John Doe', 'Jane Smith', 'Sarah Johnson'][Math.floor(Math.random() * 3)];
+        
+        receiveMessage(respondingStaff, response);
+    }, 1000 + Math.random() * 2000); // Random delay between 1-3 seconds
+}
+
+// Team Chat functionality
+function initializeTeamChat() {
+    const chatBtn = document.getElementById('chat-btn');
+    const chatModal = document.getElementById('chat-modal');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatNotification = document.getElementById('chat-notification');
+    const toggleMembersBtn = document.getElementById('toggle-members-btn');
+    const chatMembers = document.getElementById('chat-members');
+    const membersList = document.getElementById('members-list');
+    
+    if (!chatBtn || !chatModal) return;
+    
+    // Setup event listeners
+    chatBtn.addEventListener('click', function() {
+        chatModal.style.display = 'flex';
+        chatNotification.style.display = 'none';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Mark messages as read
+        localStorage.setItem('lastChatReadTime', new Date().toISOString());
+        updateUnreadCount();
+    });
+    
+    closeChatBtn.addEventListener('click', function() {
+        chatModal.style.display = 'none';
+    });
+    
+    sendChatBtn.addEventListener('click', sendMessage);
+    
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    toggleMembersBtn.addEventListener('click', function() {
+        chatMembers.classList.toggle('active');
+        this.innerHTML = chatMembers.classList.contains('active') 
+            ? 'Hide Team Members <i class="fas fa-chevron-up"></i>' 
+            : 'Show Team Members <i class="fas fa-chevron-down"></i>';
+    });
+    
+    // Load initial data
+    loadChatHistory();
+    loadTeamMembers();
+    
+    // Set interval to check for new messages
+    setInterval(checkForNewMessages, 3000);
+    
+    // Add initial messages if chat is empty
+    addInitialMessages();
+    
+    // Send a message
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+        
+        // Get current user info (admin/manager)
+        const userName = getCurrentUserName();
+        
+        // Create message object
+        const msgObj = {
+            id: generateMessageId(),
+            sender: userName,
+            senderRole: 'admin',
+            message: message,
+            timestamp: new Date().toISOString(),
+            isRead: false
+        };
+        
+        // Add to messages
+        addChatMessage(msgObj);
+        
+        // Save to storage
+        saveChatMessage(msgObj);
+        
+        // Clear input
+        chatInput.value = '';
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Get current user name (admin/manager)
+    function getCurrentUserName() {
+        // In a real app, this would come from the session
+        // For demo, we'll use a fixed name
+        return 'Admin';
+    }
+    
+    // Generate unique message ID
+    function generateMessageId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
+    
+    // Add a message to the chat display
+    function addChatMessage(msgObj) {
+        const messageEl = document.createElement('div');
+        const isSentByCurrentUser = msgObj.sender === getCurrentUserName();
+        
+        messageEl.className = `message ${isSentByCurrentUser ? 'sent' : 'received'}`;
+        
+        const time = new Date(msgObj.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageEl.innerHTML = `
+            <div class="message-bubble">${msgObj.message}</div>
+            <div class="message-info">
+                ${isSentByCurrentUser ? 'You' : `<span class="online-status"></span> ${msgObj.sender}`} 
+                • ${time}
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageEl);
+    }
+    
+    // Save message to local storage
+    function saveChatMessage(msgObj) {
+        const messages = getChatMessages();
+        messages.push(msgObj);
+        
+        // Limit to last 100 messages
+        if (messages.length > 100) {
+            messages.shift();
+        }
+        
+        localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+    }
+    
+    // Get all chat messages from storage
+    function getChatMessages() {
+        const storedMessages = localStorage.getItem('teamChatMessages');
+        return storedMessages ? JSON.parse(storedMessages) : [];
+    }
+    
+    // Load chat history
+    function loadChatHistory() {
+        const messages = getChatMessages();
+        chatMessages.innerHTML = '';
+        
+        messages.forEach(msg => {
+            addChatMessage(msg);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Add initial messages if chat is empty
+    function addInitialMessages() {
+        const messages = getChatMessages();
+        
+        if (messages.length === 0) {
+            const initialMessages = [
+                {
+                    id: 'initial-1',
+                    sender: 'Admin',
+                    senderRole: 'admin',
+                    message: 'Welcome to the Shift Q Team Chat! 👋',
+                    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    isRead: true
+                },
+                {
+                    id: 'initial-2',
+                    sender: 'Admin',
+                    senderRole: 'admin',
+                    message: 'This is a group chat where all team members can communicate with each other. Feel free to ask questions or share updates about your shifts.',
+                    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                    isRead: true
+                }
+            ];
+            
+            initialMessages.forEach(msg => {
+                saveChatMessage(msg);
+                addChatMessage(msg);
+            });
+        }
+    }
+    
+    // Check for new messages
+    function checkForNewMessages() {
+        const lastCheckTime = localStorage.getItem('lastChatCheckTime');
+        if (!lastCheckTime) {
+            localStorage.setItem('lastChatCheckTime', new Date().toISOString());
+            return;
+        }
+        
+        // In a real app, you would check with server
+        // For our demo, we'll just update the lastCheckTime
+        localStorage.setItem('lastChatCheckTime', new Date().toISOString());
+        
+        // Check if there are unread messages
+        updateUnreadCount();
+    }
+    
+    // Update unread count badge
+    function updateUnreadCount() {
+        const lastReadTime = localStorage.getItem('lastChatReadTime') || '2000-01-01';
+        const messages = getChatMessages();
+        
+        const unreadCount = messages.filter(msg => 
+            msg.timestamp > lastReadTime && msg.sender !== getCurrentUserName()
+        ).length;
+        
+        if (unreadCount > 0 && chatModal.style.display !== 'flex') {
+            chatNotification.style.display = 'flex';
+            chatNotification.textContent = unreadCount;
+        } else {
+            chatNotification.style.display = 'none';
+        }
+    }
+    
+    // Load team members list
+    function loadTeamMembers() {
+        if (!membersList) return;
+        
+        // In a real app, this would come from the server
+        const members = [
+            { name: 'Admin', role: 'admin', status: 'online' },
+            { name: 'John Doe', role: 'staff', status: 'online' },
+            { name: 'Jane Smith', role: 'staff', status: 'online' },
+            { name: 'David Wilson', role: 'staff', status: 'offline' },
+            { name: 'Sarah Johnson', role: 'staff', status: 'offline' }
+        ];
+        
+        membersList.innerHTML = '';
+        
+        members.forEach(member => {
+            const memberEl = document.createElement('div');
+            memberEl.className = 'member-item';
+            
+            const initials = member.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase();
+            
+            memberEl.innerHTML = `
+                <div class="member-avatar">${initials}</div>
+                <div class="member-name">${member.name}</div>
+                <div class="member-status ${member.status}">${member.status}</div>
+            `;
+            
+            membersList.appendChild(memberEl);
+        });
+    }
+}
+
+// Initialize team chat when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    
+    // Initialize team chat
+    initializeTeamChat();
+});

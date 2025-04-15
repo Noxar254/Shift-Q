@@ -19,5 +19,47 @@
         "target_accepted": false,
         "admin_approved": false,
         "submitted_on": "2025-04-15 14:28:26"
+    },
+    {
+        "id": "7bca7776-2283-4c49-a869-2ab35287092f",
+        "requesting_username": "john",
+        "requesting_name": "John Doe",
+        "shift_id": "460ba6e1-a87b-4b75-a061-0658aa6b14e8",
+        "shift_details": {
+            "date": "2025-04-15",
+            "time": "11:52:44",
+            "branch": "Headquarters",
+            "role": "Manager"
+        },
+        "target_username": "jane",
+        "target_name": "Jane Smith",
+        "target_shift_id": null,
+        "target_shift_details": null,
+        "reason": "am sick",
+        "status": "pending",
+        "target_accepted": false,
+        "admin_approved": false,
+        "submitted_on": "2025-04-15 16:45:41"
+    },
+    {
+        "id": "04acee52-a303-4f93-8a19-98d76761aef6",
+        "requesting_username": "john",
+        "requesting_name": "John Doe",
+        "shift_id": "f810839e-5063-4729-9750-69a20bf9bef1",
+        "shift_details": {
+            "date": "2025-04-15",
+            "time": "10:20:05",
+            "branch": "Downtown Office",
+            "role": "Manager"
+        },
+        "target_username": "jane",
+        "target_name": "Jane Smith",
+        "target_shift_id": null,
+        "target_shift_details": null,
+        "reason": "am sick",
+        "status": "pending",
+        "target_accepted": false,
+        "admin_approved": false,
+        "submitted_on": "2025-04-15 20:20:35"
     }
 ]

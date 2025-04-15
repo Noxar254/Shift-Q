@@ -82,6 +82,321 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup event listener for real-time branch and role updates
     setupRealtimeUpdates();
+    
+    // Initialize chat elements
+    const chatBtn = document.getElementById('chat-btn');
+    const chatModal = document.getElementById('chat-modal');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatNotification = document.getElementById('chat-notification');
+    const toggleMembersBtn = document.getElementById('toggle-members-btn');
+    const chatMembers = document.getElementById('chat-members');
+    const membersList = document.getElementById('members-list');
+
+    // Initialize chat functionality
+    initializeChat();
+
+    function initializeChat() {
+        if (!chatBtn || !chatModal) return;
+        
+        chatBtn.addEventListener('click', function() {
+            chatModal.style.display = 'flex';
+            chatNotification.style.display = 'none';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        closeChatBtn.addEventListener('click', function() {
+            chatModal.style.display = 'none';
+        });
+
+        sendChatBtn.addEventListener('click', sendMessage);
+        
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        toggleMembersBtn.addEventListener('click', function() {
+            chatMembers.classList.toggle('active');
+            this.innerHTML = chatMembers.classList.contains('active') 
+                ? 'Hide Team Members <i class="fas fa-chevron-up"></i>' 
+                : 'Show Team Members <i class="fas fa-chevron-down"></i>';
+        });
+        
+        // Load chat history from local storage
+        loadChatHistory();
+        
+        // Load team members
+        loadTeamMembers();
+        
+        // Set up polling for new messages
+        setInterval(checkForNewMessages, 5000); // Check every 5 seconds
+        
+        // Add seed messages if the chat is empty
+        addSeedMessagesIfEmpty();
+    }
+
+    // Add seed messages if this is a fresh chat
+    function addSeedMessagesIfEmpty() {
+        const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+        
+        if (messages.length === 0) {
+            const now = new Date();
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            
+            const seedMessages = [
+                {
+                    type: 'received',
+                    text: 'Welcome to the Shift Q Team Chat! 👋',
+                    sender: 'Manager',
+                    timestamp: yesterday.toISOString(),
+                    userId: 'manager1'
+                },
+                {
+                    type: 'received',
+                    text: 'This is where we can all communicate about shifts, leave requests, and general team updates.',
+                    sender: 'Manager',
+                    timestamp: yesterday.toISOString(),
+                    userId: 'manager1' 
+                },
+                {
+                    type: 'received',
+                    text: 'Hey everyone! Looking forward to working with you all!',
+                    sender: 'John Doe',
+                    timestamp: yesterday.toISOString(),
+                    userId: 'john'
+                },
+                {
+                    type: 'received',
+                    text: 'Good morning team, I\'ll be at the downtown branch today if anyone needs help.',
+                    sender: 'Jane Smith',
+                    timestamp: now.toISOString(),
+                    userId: 'jane'
+                }
+            ];
+            
+            localStorage.setItem('teamChatMessages', JSON.stringify(seedMessages));
+            loadChatHistory();
+        }
+    }
+
+    // Send a chat message
+    function sendMessage() {
+        const messageText = chatInput.value.trim();
+        if (!messageText) return;
+        
+        // Get current user's name from the staff dropdown
+        const staffSelect = document.getElementById('staff');
+        let userName = 'You';
+        let userId = 'anonymous';
+        
+        if (staffSelect && staffSelect.selectedIndex > 0) {
+            userName = staffSelect.options[staffSelect.selectedIndex].text;
+            userId = staffSelect.value;
+        }
+        
+        // Create message element
+        addMessageToChat('sent', messageText, userName);
+        
+        // Store in local storage for persistence with the current user ID
+        storeChatMessage('sent', messageText, userName, userId);
+        
+        // Clear input
+        chatInput.value = '';
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Add message to chat display
+    function addMessageToChat(type, text, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${type}`;
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageElement.innerHTML = `
+            <div class="message-bubble">${text}</div>
+            <div class="message-info">${type === 'sent' ? 'You' : `<span class="online-status"></span> ${sender}`} • ${time}</div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
+    }
+
+    // Store chat message in local storage
+    function storeChatMessage(type, text, sender, userId) {
+        // Get existing messages
+        let messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+        
+        // Add new message
+        messages.push({
+            type: type,
+            text: text,
+            sender: sender,
+            userId: userId || 'anonymous',
+            timestamp: new Date().toISOString()
+        });
+        
+        // Keep only last 100 messages
+        if (messages.length > 100) {
+            messages = messages.slice(messages.length - 100);
+        }
+        
+        // Store back in localStorage
+        localStorage.setItem('teamChatMessages', JSON.stringify(messages));
+    }
+
+    // Load chat history from local storage
+    function loadChatHistory() {
+        const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+        
+        if (messages.length > 0) {
+            chatMessages.innerHTML = '';
+            
+            // Get current user ID from the staff dropdown
+            const staffSelect = document.getElementById('staff');
+            const currentUserId = staffSelect && staffSelect.value ? staffSelect.value : 'anonymous';
+            
+            messages.forEach(msg => {
+                const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                // Determine if this message is from the current user
+                const isCurrentUser = msg.userId === currentUserId;
+                const messageType = isCurrentUser ? 'sent' : 'received';
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${messageType}`;
+                
+                messageElement.innerHTML = `
+                    <div class="message-bubble">${msg.text}</div>
+                    <div class="message-info">${isCurrentUser ? 'You' : `<span class="online-status"></span> ${msg.sender}`} • ${time}</div>
+                `;
+                
+                chatMessages.appendChild(messageElement);
+            });
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Update unread count for notification badge
+            updateUnreadCount(messages);
+        }
+    }
+
+    // Check for new messages that may have been added by other users
+    function checkForNewMessages() {
+        // This is a simulation of checking for new messages
+        // In a real app, you'd use WebSockets or server polling
+        
+        // For this demo, we'll just check if there are any new messages in localStorage
+        // that we haven't seen yet
+        const lastCheckedTime = localStorage.getItem('lastChatCheckTime') || '0';
+        const messages = JSON.parse(localStorage.getItem('teamChatMessages') || '[]');
+        
+        // Find any messages newer than our last check time
+        const newMessages = messages.filter(msg => 
+            new Date(msg.timestamp) > new Date(lastCheckedTime)
+        );
+        
+        if (newMessages.length > 0) {
+            // Update the last check time
+            localStorage.setItem('lastChatCheckTime', new Date().toISOString());
+            
+            // Reload the chat if we have new messages
+            loadChatHistory();
+            
+            // Show notification if chat is closed
+            if (chatModal.style.display !== 'flex' && newMessages.length > 0) {
+                chatNotification.style.display = 'flex';
+                chatNotification.textContent = newMessages.length;
+            }
+        }
+    }
+    
+    // Update unread count for notification badge
+    function updateUnreadCount(messages) {
+        // Get the last time the chat was opened
+        const lastOpenTime = localStorage.getItem('lastChatOpenTime') || '0';
+        
+        // Count messages newer than last open time
+        const unreadCount = messages.filter(msg => 
+            new Date(msg.timestamp) > new Date(lastOpenTime)
+        ).length;
+        
+        // Update notification badge if chat is closed
+        if (chatModal.style.display !== 'flex' && unreadCount > 0) {
+            chatNotification.style.display = 'flex';
+            chatNotification.textContent = unreadCount;
+        }
+        
+        // Update the last open time when the chat is opened
+        if (chatModal.style.display === 'flex') {
+            localStorage.setItem('lastChatOpenTime', new Date().toISOString());
+        }
+    }
+
+    // Load team members for chat
+    function loadTeamMembers() {
+        if (!membersList) return;
+        
+        // Get active staff from staffSelect
+        const activeMembers = [];
+        if (staffSelect) {
+            for (let i = 0; i < staffSelect.options.length; i++) {
+                if (i === 0) continue; // Skip the first "Select Staff Member" option
+                
+                activeMembers.push({
+                    id: staffSelect.options[i].value,
+                    name: staffSelect.options[i].text,
+                    status: Math.random() > 0.3 ? 'online' : 'offline', // Random status for demo
+                    initial: getInitials(staffSelect.options[i].text)
+                });
+            }
+        }
+        
+        // Add manager/admin to the list
+        activeMembers.push({ 
+            id: 'manager1', 
+            name: 'Manager', 
+            status: 'online', 
+            initial: 'M' 
+        });
+        
+        // Sort by online status first, then by name
+        activeMembers.sort((a, b) => {
+            if (a.status === b.status) {
+                return a.name.localeCompare(b.name);
+            }
+            return a.status === 'online' ? -1 : 1;
+        });
+        
+        let html = '';
+        
+        activeMembers.forEach(member => {
+            html += `
+                <div class="member-item">
+                    <div class="member-avatar">${member.initial}</div>
+                    <div class="member-name">${member.name}</div>
+                    <div class="member-status ${member.status}">${member.status}</div>
+                </div>
+            `;
+        });
+        
+        membersList.innerHTML = html;
+    }
+    
+    // Helper function to get initials from a name
+    function getInitials(name) {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
+    }
 });
 
 // Load staff list into dropdowns
@@ -1055,4 +1370,68 @@ function handlePortalUpdate(update) {
             }
             break;
     }
+}
+
+// Trigger the alarm
+function triggerAlarm(planIndex) {
+    const plans = JSON.parse(localStorage.getItem('staffPlans') || '[]');
+    const plan = plans[planIndex];
+    
+    if (!plan) return; // Plan might have been deleted
+    
+    // Show an alert
+    alert(`ALARM: Time to "${plan.text}"!`);
+    
+    // Add visual indication
+    const activeAlarm = document.getElementById('active-alarm');
+    activeAlarm && activeAlarm.classList.add('alarm-ringing');
+    
+    // Play a sound (optional)
+    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+    audio.play().catch(e => console.log('Audio could not play: ', e));
+    
+    // Mark the plan as expiring soon
+    const planElements = document.querySelectorAll('.plan-item');
+    if (planElements && planElements[planIndex]) {
+        planElements[planIndex].classList.add('plan-expiring-soon');
+    }
+    
+    // Add time of deletion to the plan data
+    const now = new Date();
+    plans[planIndex].deleteAt = new Date(now.getTime() + 30 * 60 * 1000).toISOString(); // 30 minutes from now
+    localStorage.setItem('staffPlans', JSON.stringify(plans));
+    
+    // Show a toast notification
+    showToast('Plan will be auto-deleted in 30 minutes');
+    
+    // Set a timeout to auto-delete the plan 30 minutes after the alarm rings
+    setTimeout(() => {
+        deletePlan(planIndex);
+        showToast('Plan automatically deleted');
+    }, 30 * 60 * 1000); // 30 minutes
+}
+
+// Clean up expired plans
+function cleanupExpiredPlans() {
+    const plans = JSON.parse(localStorage.getItem('staffPlans') || '[]');
+    const now = new Date();
+    let hasChanges = false;
+    
+    const activePlans = plans.filter(plan => {
+        // Check if plan has expired (general expiry)
+        const isPlanExpired = new Date(plan.expires) <= now;
+        
+        // Check if plan should be deleted after alarm (30 min rule)
+        const shouldDeleteAfterAlarm = plan.deleteAt && new Date(plan.deleteAt) <= now;
+        
+        // Keep plan only if it's not expired and not due for deletion after alarm
+        return !isPlanExpired && !shouldDeleteAfterAlarm;
+    });
+    
+    if (activePlans.length !== plans.length) {
+        localStorage.setItem('staffPlans', JSON.stringify(activePlans));
+        hasChanges = true;
+    }
+    
+    return hasChanges;
 }
