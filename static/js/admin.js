@@ -6,6 +6,66 @@ const closeModalBtn = document.querySelector('#staff-modal .close-modal');
 const addStaffBtn = document.getElementById('add-staff-btn');
 const saveStaffBtn = document.getElementById('save-staff');
 
+// Security - CSRF token handling
+let csrfToken = '';
+
+// Get CSRF token from meta tag
+function getCSRFToken() {
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    if (tokenMeta) {
+        csrfToken = tokenMeta.getAttribute('content');
+    } else {
+        console.error('CSRF token meta tag not found');
+    }
+    return csrfToken;
+}
+
+// Global API request handler with security measures
+function secureApiRequest(url, method = 'GET', data = null) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCSRFToken()
+    };
+
+    const options = {
+        method: method,
+        headers: headers,
+        credentials: 'same-origin' // Include cookies for session authentication
+    };
+
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        options.body = JSON.stringify(data);
+    }
+
+    // Add request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    options.signal = controller.signal;
+
+    return fetch(url, options)
+        .then(response => {
+            clearTimeout(timeoutId);
+            
+            // Handle HTTP errors
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+            
+            return response.json();
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            console.error('Request error:', error);
+            
+            // Handle AbortController timeout
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please try again.');
+            }
+            
+            throw error;
+        });
+}
+
 // DOM Elements for staff photo upload
 const staffPhotoInput = document.getElementById('staff-photo');
 const photoPreview = document.getElementById('photo-preview');
@@ -211,8 +271,7 @@ function setupTabs() {
 // Load dashboard data
 function loadDashboardData() {
     // Load active staff and shifts
-    fetch('/get_shifts')
-        .then(response => response.json())
+    secureApiRequest('/get_shifts')
         .then(data => {
             if (data.status === 'success') {
                 updateDashboardStats(data.shifts);
@@ -222,8 +281,7 @@ function loadDashboardData() {
         .catch(error => console.error('Error:', error));
     
     // Load leave requests
-    fetch('/get_leave_requests')
-        .then(response => response.json())
+    secureApiRequest('/get_leave_requests')
         .then(data => {
             if (data.status === 'success') {
                 updateLeaveStats(data.leave_requests);
@@ -360,14 +418,7 @@ function handleLeaveAction(e) {
         status: action
     };
     
-    fetch('/approve_leave', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/approve_leave', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Refresh leave requests data
@@ -673,8 +724,7 @@ function updateStaffSelectors() {
 function loadShifts() {
     shiftsTable.innerHTML = '<tr><td colspan="7" class="loading-cell">Loading shifts data...</td></tr>';
     
-    fetch('/get_shifts')
-        .then(response => response.json())
+    secureApiRequest('/get_shifts')
         .then(data => {
             if (data.status === 'success') {
                 allShifts = data.shifts;
@@ -844,8 +894,7 @@ function exportShifts() {
 function loadLeaveRequests() {
     allLeaveRequestsTable.innerHTML = '<tr><td colspan="6" class="loading-cell">Loading leave requests...</td></tr>';
     
-    fetch('/get_leave_requests')
-        .then(response => response.json())
+    secureApiRequest('/get_leave_requests')
         .then(data => {
             if (data.status === 'success') {
                 allLeaveRequests = data.leave_requests;
@@ -1340,8 +1389,7 @@ function loadShiftChangeRequests() {
     
     shiftSwapRequestsTable.innerHTML = '<tr><td colspan="7" class="loading-cell">Loading shift change requests...</td></tr>';
     
-    fetch('/get_shift_change_requests')
-        .then(response => response.json())
+    secureApiRequest('/get_shift_change_requests')
         .then(data => {
             if (data.status === 'success') {
                 allShiftChangeRequests = data.shift_change_requests;
@@ -1482,14 +1530,7 @@ function handleShiftChangeAction(e) {
         approve: approve
     };
     
-    fetch('/approve_shift_change', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/approve_shift_change', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Refresh shift change requests data
@@ -4305,8 +4346,7 @@ function handleActivityAction(actionType, data, activityItem) {
 // Update pending approvals section
 function updatePendingApprovals() {
     // Refresh leave requests
-    fetch('/get_leave_requests')
-        .then(response => response.json())
+    secureApiRequest('/get_leave_requests')
         .then(data => {
             if (data.status === 'success') {
                 allLeaveRequests = data.leave_requests;
@@ -4317,8 +4357,7 @@ function updatePendingApprovals() {
         .catch(error => console.error('Error:', error));
     
     // Refresh shift change requests
-    fetch('/get_shift_change_requests')
-        .then(response => response.json())
+    secureApiRequest('/get_shift_change_requests')
         .then(data => {
             if (data.status === 'success') {
                 allShiftChangeRequests = data.requests;
@@ -4334,8 +4373,7 @@ function updatePendingApprovals() {
 // Update dashboard counts
 function updateDashboardCounts() {
     // Refresh shifts data
-    fetch('/get_shifts')
-        .then(response => response.json())
+    secureApiRequest('/get_shifts')
         .then(data => {
             if (data.status === 'success') {
                 allShifts = data.shifts;

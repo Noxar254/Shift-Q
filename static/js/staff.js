@@ -14,6 +14,66 @@ let allRoles = {};
 // Admin portal real-time communication
 let adminPortalEventChannel = null;
 
+// CSRF token handling
+let csrfToken = '';
+
+// Get CSRF token from meta tag
+function getCSRFToken() {
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    if (tokenMeta) {
+        csrfToken = tokenMeta.getAttribute('content');
+    } else {
+        console.error('CSRF token meta tag not found');
+    }
+    return csrfToken;
+}
+
+// Enhanced API request function with security measures
+function secureApiRequest(url, method = 'GET', data = null) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCSRFToken()
+    };
+
+    const options = {
+        method: method,
+        headers: headers,
+        credentials: 'same-origin' // Include cookies for session authentication
+    };
+
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        options.body = JSON.stringify(data);
+    }
+
+    // Add request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    options.signal = controller.signal;
+
+    return fetch(url, options)
+        .then(response => {
+            clearTimeout(timeoutId);
+            
+            // Handle HTTP errors
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+            
+            return response.json();
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            console.error('Request error:', error);
+            
+            // Handle AbortController timeout
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out. Please try again.');
+            }
+            
+            throw error;
+        });
+}
+
 // DOM Elements
 const clockBtn = document.getElementById('clock-btn');
 const leaveBtn = document.getElementById('leave-btn');
@@ -596,8 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load staff list into dropdowns
 function loadStaffList() {
     // In a real application, you would have an endpoint to get all staff
-    fetch('/get_staff')
-        .then(response => response.json())
+    secureApiRequest('/get_staff')
         .then(data => {
             if (data.status === 'success') {
                 allStaffMembers = data.staff;
@@ -678,8 +737,7 @@ function populateStaffDropdowns(staffMembers) {
 
 // Check for staff updates - compare current staff list with server data
 function checkForStaffUpdates() {
-    fetch('/get_staff')
-        .then(response => response.json())
+    secureApiRequest('/get_staff')
         .then(data => {
             if (data.status === 'success') {
                 const newStaffList = data.staff;
@@ -723,14 +781,7 @@ function handleStaffSelection() {
     }
     
     // Send selected staff to server
-    fetch('/set_staff', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: selectedStaff })
-    })
-    .then(response => response.json())
+    secureApiRequest('/set_staff', 'POST', { username: selectedStaff })
     .then(data => {
         if (data.status === 'success') {
             // Display the staff ID badge
@@ -794,8 +845,7 @@ function getLocation() {
 
 // Check if already clocked in
 function checkClockInStatus() {
-    fetch('/get_shifts')
-        .then(response => response.json())
+    secureApiRequest('/get_shifts')
         .then(data => {
             if (data.status === 'success') {
                 // Update stats
@@ -977,14 +1027,7 @@ function clockIn() {
     };
     
     // Send clock in request
-    fetch('/clock_in', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/clock_in', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Show detailed success message
@@ -1028,14 +1071,7 @@ function clockOut() {
     };
     
     // Send clock out request
-    fetch('/clock_out', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/clock_out', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Format time for display
@@ -1159,8 +1195,7 @@ function loadUserShifts() {
     myShiftSelect.innerHTML = '<option value="">Select your shift</option>';
     
     // Fetch shifts from the server
-    fetch('/get_shifts')
-        .then(response => response.json())
+    secureApiRequest('/get_shifts')
         .then(data => {
             if (data.status === 'success') {
                 // Store shifts data
@@ -1237,14 +1272,7 @@ function submitLeaveRequest() {
     };
     
     // Send leave request
-    fetch('/request_leave', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/request_leave', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Close modal
@@ -1322,14 +1350,7 @@ function submitShiftChangeRequest() {
     const selectedShiftText = document.querySelector(`#my-shift option[value="${selectedShift}"]`)?.textContent || 'selected shift';
     
     // Send shift change request
-    fetch('/request_shift_change', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
+    secureApiRequest('/request_shift_change', 'POST', data)
     .then(data => {
         if (data.status === 'success') {
             // Close modal
@@ -1476,8 +1497,7 @@ function loadBranches() {
     if (!branchSelect) return;
     
     // In a real application, you would fetch this from the server
-    fetch('/get_branches')
-        .then(response => response.json())
+    secureApiRequest('/get_branches')
         .then(data => {
             if (data.status === 'success') {
                 allBranches = data.branches;
@@ -1545,8 +1565,7 @@ function populateBranchDropdown(branches) {
 function loadRoles() {
     if (!roleSelect) return;
     
-    fetch('/get_roles')
-        .then(response => response.json())
+    secureApiRequest('/get_roles')
         .then(data => {
             if (data.status === 'success') {
                 allRoles = data.roles;
