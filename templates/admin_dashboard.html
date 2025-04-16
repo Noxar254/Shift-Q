@@ -1410,6 +1410,352 @@
         .emoji-btn:hover {
             color: #4c6ef5;
         }
+        
+        /* Enhanced Meeting Modal Styles */
+        .meeting-modal-content {
+            max-width: 600px;
+            border-radius: 12px;
+            padding: 30px;
+        }
+        
+        .meeting-modal-content .modal-title {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.8rem;
+        }
+        
+        .meeting-modal-content .modal-title i {
+            color: #4c6ef5;
+        }
+        
+        .meeting-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .meeting-option-btn {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .meeting-option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instant-option:hover {
+            border-color: #e03131;
+        }
+        
+        .schedule-option:hover {
+            border-color: #4c6ef5;
+        }
+        
+        .meeting-option-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+        
+        .instant-option .meeting-option-icon {
+            background: rgba(224, 49, 49, 0.1);
+            color: #e03131;
+        }
+        
+        .schedule-option .meeting-option-icon {
+            background: rgba(76, 110, 245, 0.1);
+            color: #4c6ef5;
+        }
+        
+        .meeting-option-content {
+            flex: 1;
+        }
+        
+        .meeting-option-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            color: #343a40;
+        }
+        
+        .meeting-option-content p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* Meeting Form Styles */
+        #meeting-form {
+            margin-top: 25px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            flex: 1;
+        }
+        
+        .form-group.full-width {
+            width: 100%;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #343a40;
+        }
+        
+        .required {
+            color: #e03131;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4c6ef5;
+            box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.15);
+        }
+        
+        .select-participants-container {
+            position: relative;
+        }
+        
+        #meeting-participants {
+            height: 100px;
+            background-color: #f8f9fa;
+        }
+        
+        .participants-help {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn-cancel {
+            padding: 10px 20px;
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            color: #495057;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #dee2e6;
+        }
+        
+        /* Success View Styles */
+        #meeting-success {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .meeting-success-icon {
+            font-size: 60px;
+            color: #40c057;
+            margin-bottom: 20px;
+            animation: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes success-pop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        #meeting-success h3 {
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+        
+        .meeting-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .meeting-details p {
+            margin: 8px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .meeting-details p strong {
+            min-width: 120px;
+            display: inline-block;
+            color: #495057;
+        }
+        
+        .meeting-details a {
+            color: #4c6ef5;
+            text-decoration: none;
+        }
+        
+        .meeting-details a:hover {
+            text-decoration: underline;
+        }
+        
+        .meeting-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn-meeting-action {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+        }
+        
+        #copy-meeting-link {
+            background-color: rgba(76, 110, 245, 0.1);
+            color: #4c6ef5;
+        }
+        
+        #copy-meeting-link:hover {
+            background-color: rgba(76, 110, 245, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        #send-meeting-invites {
+            background-color: rgba(64, 192, 87, 0.1);
+            color: #40c057;
+        }
+        
+        #send-meeting-invites:hover {
+            background-color: rgba(64, 192, 87, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .meeting-modal-content {
+                padding: 20px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .meeting-option-btn {
+                padding: 15px;
+            }
+            
+            .meeting-option-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                margin-right: 15px;
+            }
+            
+            .meeting-actions {
+                flex-direction: column;
+            }
+        }
+        
+        /* Floating Meeting Button Styles */
+        .floating-meeting-btn {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #1abc9c);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 99;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .floating-meeting-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .floating-meeting-btn i {
+            font-size: 24px;
+        }
+        
+        .meeting-notification {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #fa5252;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
@@ -1501,13 +1847,13 @@
                             <div class="stat-count" id="leave-count">0</div>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card meeting-card" id="start-meeting-card">
                         <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
+                            <i class="fas fa-video"></i>
                         </div>
                         <div class="stat-info">
-                            <h3>Shifts Today</h3>
-                            <div class="stat-count" id="shift-count">0</div>
+                            <h3>Start Meeting</h3>
+                            <div class="stat-action">Click to start</div>
                         </div>
                     </div>
                 </div>
@@ -1918,10 +2264,123 @@
         </div>
     </div>
 
+    <!-- Meeting Modal -->
+    <div id="meeting-modal" class="modal">
+        <div class="modal-content meeting-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title"><i class="fas fa-video"></i> Schedule Meeting</h2>
+            
+            <div class="meeting-buttons">
+                <button id="instant-meeting-btn" class="meeting-option-btn instant-option">
+                    <div class="meeting-option-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="meeting-option-content">
+                        <h3>Start Instant Meeting</h3>
+                        <p>Quick meeting that starts right now</p>
+                    </div>
+                </button>
+                
+                <button id="schedule-meeting-btn" class="meeting-option-btn schedule-option">
+                    <div class="meeting-option-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div class="meeting-option-content">
+                        <h3>Schedule Meeting</h3>
+                        <p>Plan a meeting for later</p>
+                    </div>
+                </button>
+            </div>
+            
+            <div id="meeting-form" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="meeting-title">Meeting Title <span class="required">*</span></label>
+                        <input type="text" id="meeting-title" placeholder="Enter meeting title" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="meeting-date">Date <span class="required">*</span></label>
+                        <input type="date" id="meeting-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="meeting-time">Time <span class="required">*</span></label>
+                        <input type="time" id="meeting-time" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="meeting-duration">Duration</label>
+                        <select id="meeting-duration">
+                            <option value="15">15 minutes</option>
+                            <option value="30" selected>30 minutes</option>
+                            <option value="45">45 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="meeting-participants">Participants</label>
+                        <div class="select-participants-container">
+                            <select id="meeting-participants" multiple>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                            <div class="participants-help">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Hold Ctrl/Cmd to select multiple participants</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="meeting-description">Description</label>
+                        <textarea id="meeting-description" rows="3" placeholder="Meeting agenda or description"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancel-meeting-btn">Cancel</button>
+                    <button id="create-meeting-btn" class="btn-primary">Create Meeting</button>
+                </div>
+            </div>
+            
+            <!-- Meeting created success view -->
+            <div id="meeting-success" style="display: none;">
+                <div class="meeting-success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Meeting Created Successfully!</h3>
+                <div id="meeting-details" class="meeting-details"></div>
+                <div class="meeting-actions">
+                    <button id="copy-meeting-link" class="btn-meeting-action">
+                        <i class="fas fa-link"></i> Copy Meeting Link
+                    </button>
+                    <button id="send-meeting-invites" class="btn-meeting-action">
+                        <i class="fas fa-envelope"></i> Send Invites
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Chat Button -->
     <div class="floating-chat-btn" id="chat-btn">
         <i class="fas fa-comments"></i>
         <div class="chat-notification" id="chat-notification" style="display: none;">1</div>
+    </div>
+    
+    <!-- Floating Meeting Button -->
+    <div class="floating-meeting-btn" id="meeting-btn">
+        <i class="fas fa-video"></i>
+        <div class="meeting-notification" id="meeting-notification" style="display: none;">1</div>
     </div>
 
     <!-- Chat Modal -->
@@ -2049,6 +2508,18 @@
                 // Show preferences modal
                 alert('Preferences page will be implemented in future updates.');
             });
+        });
+
+        // Meeting functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const cancelMeetingBtn = document.getElementById('cancel-meeting-btn');
+            
+            if (cancelMeetingBtn) {
+                cancelMeetingBtn.addEventListener('click', function() {
+                    const meetingForm = document.getElementById('meeting-form');
+                    meetingForm.style.display = 'none';
+                });
+            }
         });
     </script>
 </body>

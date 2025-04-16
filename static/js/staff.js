@@ -27,6 +27,11 @@ const staffSelect = document.getElementById('staff'); // Staff dropdown
 const myShiftSelect = document.getElementById('my-shift'); // My shift dropdown
 const swapWithStaffSelect = document.getElementById('swap-with-staff'); // Staff to swap with dropdown
 
+// DOM Elements for Meetings
+const meetingBtn = document.getElementById('meeting-btn');
+const meetingNotification = document.getElementById('meeting-notification');
+const meetingAlert = document.querySelector('.meeting-alert');
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     // Get geolocation
@@ -97,6 +102,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize chat functionality
     initializeChat();
+
+    // Initialize meeting features
+    initializeMeetings();
+    
+    // Check for scheduled meetings
+    checkForMeetings();
+    
+    // Check for meetings every 5 minutes
+    setInterval(checkForMeetings, 5 * 60 * 1000);
 
     function initializeChat() {
         if (!chatBtn || !chatModal) return;
@@ -791,10 +805,71 @@ function checkClockInStatus() {
                     // Set branch and role selects to match the active shift
                     branchSelect.value = activeShift.branch_id;
                     roleSelect.value = activeShift.role_id;
+                    
+                    // Disable dropdown selections when clocked in
                     branchSelect.disabled = true;
                     roleSelect.disabled = true;
+                    
+                    // Hide staff dropdown and show welcome message when clocked in
+                    if (staffSelect) {
+                        // If username is available in the shift data, set the staff dropdown
+                        if (activeShift.username) {
+                            // Get the staff name from the dropdown
+                            let staffName = '';
+                            for (let i = 0; i < staffSelect.options.length; i++) {
+                                if (staffSelect.options[i].value === activeShift.username) {
+                                    staffName = staffSelect.options[i].text;
+                                    break;
+                                }
+                            }
+                            
+                            // Save selected staff value for when we need to restore it
+                            staffSelect.dataset.selectedValue = activeShift.username;
+                            
+                            // Hide dropdown and show welcome message
+                            const staffSelectContainer = staffSelect.parentElement;
+                            staffSelect.style.display = 'none';
+                            
+                            // Create or update welcome message
+                            let welcomeMsg = staffSelectContainer.querySelector('.staff-welcome-message');
+                            if (!welcomeMsg) {
+                                welcomeMsg = document.createElement('div');
+                                welcomeMsg.className = 'staff-welcome-message';
+                                staffSelectContainer.appendChild(welcomeMsg);
+                            }
+                            welcomeMsg.textContent = `Welcome, ${staffName || activeShift.username}!`;
+                            welcomeMsg.style.fontWeight = 'bold';
+                            welcomeMsg.style.fontSize = '1.1rem';
+                            welcomeMsg.style.color = '#2ecc71';
+                            
+                            // Show staff ID badge with the current user
+                            const staffIdBadge = document.getElementById('staff-id-badge');
+                            const staffIdNumber = document.getElementById('staff-id-number');
+                            if (staffIdBadge && staffIdNumber) {
+                                staffIdBadge.style.display = 'inline-flex';
+                                staffIdNumber.textContent = `ID: ${activeShift.username.toUpperCase()}`;
+                            }
+                        }
+                    }
                 } else {
                     updateClockButton('in');
+                    
+                    // Show staff dropdown when not clocked in
+                    if (staffSelect) {
+                        staffSelect.style.display = '';
+                        
+                        // Remove welcome message if it exists
+                        const staffSelectContainer = staffSelect.parentElement;
+                        const welcomeMsg = staffSelectContainer.querySelector('.staff-welcome-message');
+                        if (welcomeMsg) {
+                            welcomeMsg.remove();
+                        }
+                        
+                        // Restore selected value if we have one saved
+                        if (staffSelect.dataset.selectedValue) {
+                            staffSelect.value = staffSelect.dataset.selectedValue;
+                        }
+                    }
                 }
             }
         })
@@ -906,25 +981,13 @@ function clockIn() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            // Update UI
-            updateClockButton('out');
-            isClockedIn = true;
-            currentShiftId = data.shift.id;
-            
-            // Disable branch and role selections
-            branchSelect.disabled = true;
-            roleSelect.disabled = true;
-            
-            // Get branch and role names for better feedback
-            const branchName = document.querySelector(`#branch option[value="${branchSelect.value}"]`)?.textContent || 'selected branch';
-            const roleName = document.querySelector(`#role option[value="${roleSelect.value}"]`)?.textContent || 'selected role';
-            
             // Show detailed success message
-            showToast(`Successfully clocked in at ${branchName} as ${roleName}!`, 'success');
+            showToast(`Successfully clocked in!`, 'success');
             
-            // Update shift count
-            const currentShifts = parseInt(document.getElementById('shifts-count').textContent) || 0;
-            document.getElementById('shifts-count').textContent = currentShifts + 1;
+            // Set a brief timeout to allow the toast to be seen before refreshing
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             showToast('Error: ' + data.message, 'error');
         }
@@ -959,20 +1022,16 @@ function clockOut() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            // Update UI
-            updateClockButton('in');
-            isClockedIn = false;
-            currentShiftId = null;
-            
-            // Enable branch and role selections
-            branchSelect.disabled = false;
-            roleSelect.disabled = false;
-            
             // Format time for display
             const clockOutTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
             // Show detailed success message
             showToast(`Successfully clocked out at ${clockOutTime}! Your shift has been recorded.`, 'success');
+            
+            // Set a brief timeout to allow the toast to be seen before refreshing
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             showToast('Error: ' + data.message, 'error');
         }
@@ -1913,4 +1972,292 @@ function playAlertSound() {
     const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-simple-alert-tone-1052.mp3');
     audio.volume = 0.5; // Lower volume to be less intrusive
     audio.play().catch(e => console.log('Audio could not play: ', e));
+}
+
+// Initialize meetings functionality
+function initializeMeetings() {
+    if (!meetingBtn) return;
+    
+    meetingBtn.addEventListener('click', function() {
+        // Open the meeting modal directly instead of trying to find meetings first
+        const meetingModal = document.getElementById('meeting-modal');
+        if (meetingModal) {
+            meetingModal.style.display = 'block';
+            
+            // Reset any previous form state
+            const meetingForm = document.getElementById('meeting-form');
+            const meetingSuccess = document.getElementById('meeting-success');
+            
+            if (meetingForm) meetingForm.style.display = 'none';
+            if (meetingSuccess) meetingSuccess.style.display = 'none';
+            
+            // Hide meeting notification if it exists
+            if (meetingNotification) {
+                meetingNotification.style.display = 'none';
+            }
+        }
+        
+        // Mark any unread meetings as seen
+        const seenMeetingIds = JSON.parse(localStorage.getItem('seenMeetingIds') || '[]');
+        const meetings = JSON.parse(localStorage.getItem('scheduledMeetings') || '[]');
+        
+        // Mark all meetings as seen
+        const newSeenIds = meetings.map(meeting => meeting.id);
+        localStorage.setItem('seenMeetingIds', JSON.stringify([...new Set([...seenMeetingIds, ...newSeenIds])]));
+    });
+}
+
+// Check for meetings
+function checkForMeetings() {
+    console.log('Checking for meetings...');
+    const meetings = JSON.parse(localStorage.getItem('scheduledMeetings') || '[]');
+    
+    if (meetings.length === 0) {
+        console.log('No meetings found');
+        return;
+    }
+    
+    // Get seen meeting IDs
+    const seenMeetingIds = JSON.parse(localStorage.getItem('seenMeetingIds') || '[]');
+    
+    // Find active or upcoming meetings that haven't been seen
+    const now = new Date();
+    const upcomingMeetings = meetings.filter(meeting => {
+        // If meeting has been seen, don't show notification
+        if (seenMeetingIds.includes(meeting.id)) return false;
+        
+        if (meeting.type === 'instant') return true;
+        
+        // For scheduled meetings, check if it's within the next 30 minutes
+        if (meeting.date && meeting.time) {
+            const meetingDate = new Date(`${meeting.date}T${meeting.time}`);
+            const timeDiff = meetingDate - now;
+            return timeDiff > 0 && timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
+        }
+        return false;
+    });
+    
+    if (upcomingMeetings.length > 0) {
+        console.log('Found upcoming meetings:', upcomingMeetings.length);
+        // Show notification badge
+        if (meetingNotification) {
+            meetingNotification.textContent = upcomingMeetings.length;
+            meetingNotification.style.display = 'flex';
+        }
+        
+        // Show meeting alert on dashboard
+        displayMeetingAlert(upcomingMeetings[0]); // Show the first upcoming meeting
+    } else {
+        // Hide notification badge
+        if (meetingNotification) {
+            meetingNotification.style.display = 'none';
+        }
+    }
+}
+
+// Display meeting alert on the dashboard
+function displayMeetingAlert(meeting) {
+    // Create alert if it doesn't exist
+    if (!document.querySelector('.meeting-alert')) {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = 'meeting-alert';
+        
+        // Get the dashboard container (first child of body that's a div)
+        const container = document.querySelector('.staff-dashboard-container');
+        
+        if (container) {
+            // Insert the alert at the beginning of the container
+            container.insertBefore(alertContainer, container.firstChild);
+        } else {
+            // Fallback to appending to body
+            document.body.appendChild(alertContainer);
+        }
+    }
+    
+    const alertElement = document.querySelector('.meeting-alert');
+    
+    // Format meeting time
+    let meetingTimeDisplay = 'Now';
+    if (meeting.date && meeting.time) {
+        const meetingDate = new Date(`${meeting.date}T${meeting.time}`);
+        meetingTimeDisplay = meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    
+    // Get meeting participants as a string if available
+    let participantsDisplay = '';
+    if (meeting.participants && meeting.participants.length > 0) {
+        const participantNames = meeting.participants.map(p => p.name);
+        participantsDisplay = `<div class="meeting-participants">Attendees: ${participantNames.join(', ')}</div>`;
+    }
+    
+    // Set alert content
+    alertElement.innerHTML = `
+        <div class="alert-content">
+            <div class="alert-icon"><i class="fas fa-video"></i></div>
+            <div class="alert-text">
+                <strong>${meeting.type === 'instant' ? 'Instant Meeting' : meeting.title}</strong>
+                <div>${meeting.type === 'instant' ? 'A meeting is starting now' : `Meeting scheduled for today at ${meetingTimeDisplay}`}</div>
+                ${participantsDisplay}
+                ${meeting.description ? `<div class="meeting-description">${meeting.description}</div>` : ''}
+            </div>
+        </div>
+        <div class="alert-actions">
+            <button class="join-meeting-btn" data-meeting-id="${meeting.id}" data-meeting-url="${meeting.url}">
+                <i class="fas fa-sign-in-alt"></i> Join
+            </button>
+            <button class="dismiss-meeting-btn" data-meeting-id="${meeting.id}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add event listeners to buttons
+    alertElement.querySelector('.join-meeting-btn').addEventListener('click', function() {
+        const meetingId = this.getAttribute('data-meeting-id');
+        const meetingUrl = this.getAttribute('data-meeting-url');
+        
+        // Mark meeting as seen
+        markMeetingAsSeen(meetingId);
+        
+        // Open meeting URL
+        window.open(meetingUrl, '_blank');
+    });
+    
+    alertElement.querySelector('.dismiss-meeting-btn').addEventListener('click', function() {
+        const meetingId = this.getAttribute('data-meeting-id');
+        
+        // Mark meeting as seen
+        markMeetingAsSeen(meetingId);
+        
+        // Remove alert
+        alertElement.remove();
+    });
+    
+    // Add CSS for meeting alert if not already present
+    if (!document.getElementById('meeting-alert-styles')) {
+        const style = document.createElement('style');
+        style.id = 'meeting-alert-styles';
+        style.innerHTML = `
+            .meeting-alert {
+                background-color: rgba(52, 152, 219, 0.15);
+                border-left: 5px solid #3498db;
+                color: #2c3e50;
+                padding: 15px;
+                margin: 15px auto;
+                border-radius: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+                max-width: 95%;
+                animation: pulse-meeting 2s infinite;
+            }
+            
+            @keyframes pulse-meeting {
+                0% { box-shadow: 0 3px 10px rgba(52, 152, 219, 0.2); }
+                50% { box-shadow: 0 3px 20px rgba(52, 152, 219, 0.5); }
+                100% { box-shadow: 0 3px 10px rgba(52, 152, 219, 0.2); }
+            }
+            
+            .alert-content {
+                display: flex;
+                align-items: flex-start;
+                gap: 15px;
+                flex: 1;
+            }
+            
+            .alert-icon {
+                font-size: 1.8rem;
+                color: #3498db;
+                padding-top: 2px;
+            }
+            
+            .alert-text {
+                flex: 1;
+            }
+            
+            .alert-actions {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .join-meeting-btn {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                transition: background-color 0.2s;
+            }
+            
+            .join-meeting-btn:hover {
+                background-color: #2980b9;
+            }
+            
+            .dismiss-meeting-btn {
+                background: none;
+                border: none;
+                color: #7f8c8d;
+                cursor: pointer;
+                font-size: 1rem;
+                padding: 5px;
+                transition: color 0.2s;
+            }
+            
+            .dismiss-meeting-btn:hover {
+                color: #c0392b;
+            }
+            
+            .meeting-participants {
+                font-size: 0.9rem;
+                color: #7f8c8d;
+                margin-top: 5px;
+            }
+            
+            .meeting-description {
+                font-size: 0.9rem;
+                color: #34495e;
+                margin-top: 5px;
+                font-style: italic;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Mark a meeting as seen
+function markMeetingAsSeen(meetingId) {
+    const seenMeetingIds = JSON.parse(localStorage.getItem('seenMeetingIds') || '[]');
+    
+    // Add to seen meetings if not already there
+    if (!seenMeetingIds.includes(meetingId)) {
+        seenMeetingIds.push(meetingId);
+        localStorage.setItem('seenMeetingIds', JSON.stringify(seenMeetingIds));
+    }
+    
+    // Update notification count
+    if (meetingNotification) {
+        // Get unseen meetings
+        const meetings = JSON.parse(localStorage.getItem('scheduledMeetings') || '[]');
+        const unseenMeetings = meetings.filter(m => !seenMeetingIds.includes(m.id));
+        
+        if (unseenMeetings.length > 0) {
+            meetingNotification.textContent = unseenMeetings.length;
+        } else {
+            meetingNotification.style.display = 'none';
+        }
+    }
+}
+
+// Helper function to check if two dates are the same day
+function isSameDay(date1, date2) {
+    return date1.getDate() === date2.getDate() && 
+           date1.getMonth() === date2.getMonth() && 
+           date1.getFullYear() === date2.getFullYear();
 }

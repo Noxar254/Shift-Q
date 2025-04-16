@@ -58,6 +58,21 @@ const toggleMembersBtn = document.getElementById('toggle-members-btn');
 const chatMembers = document.getElementById('chat-members');
 const membersList = document.getElementById('members-list');
 
+// DOM Elements for Meetings
+const meetingBtn = document.getElementById('meeting-btn');
+const meetingModal = document.getElementById('meeting-modal');
+const closeMeetingBtn = document.querySelector('#meeting-modal .close-modal');
+const instantMeetingBtn = document.getElementById('instant-meeting-btn');
+const scheduleMeetingBtn = document.getElementById('schedule-meeting-btn');
+const meetingForm = document.getElementById('meeting-form');
+const createMeetingBtn = document.getElementById('create-meeting-btn');
+const meetingSuccess = document.getElementById('meeting-success');
+const meetingDetails = document.getElementById('meeting-details');
+const copyMeetingLinkBtn = document.getElementById('copy-meeting-link');
+const sendMeetingInvitesBtn = document.getElementById('send-meeting-invites');
+const startMeetingCard = document.getElementById('start-meeting-card');
+const meetingNotification = document.getElementById('meeting-notification');
+
 // Global variables for data management
 let allStaff = [];
 let allShifts = [];
@@ -168,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add lateness threshold settings in settings tab
     setupLatenessSettings();
+
+    // Initialize meetings feature
+    initializeMeetings();
 });
 
 // Set up tab navigation
@@ -3255,4 +3273,425 @@ function createEmojiPicker() {
         // Close the emoji picker
         toggleEmojiPicker(false);
     });
+}
+
+// Initialize meetings functionality
+function initializeMeetings() {
+    // Check if meeting elements exist
+    if (!meetingBtn || !meetingModal) return;
+    
+    // Set default date and time for meeting scheduler
+    const today = new Date();
+    const dateInput = document.getElementById('meeting-date');
+    const timeInput = document.getElementById('meeting-time');
+    
+    if (dateInput) {
+        dateInput.valueAsDate = today;
+    }
+    
+    if (timeInput) {
+        timeInput.value = `${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+    }
+    
+    // Populate participants dropdown with staff members
+    populateMeetingParticipants();
+    
+    // Add event listeners
+    if (meetingBtn) {
+        meetingBtn.addEventListener('click', function() {
+            openMeetingModal();
+        });
+    }
+    
+    // The start meeting card in the dashboard should also open the meeting modal
+    if (startMeetingCard) {
+        startMeetingCard.addEventListener('click', function() {
+            openMeetingModal();
+        });
+    }
+    
+    if (closeMeetingBtn) {
+        closeMeetingBtn.addEventListener('click', closeMeetingModal);
+    }
+    
+    if (instantMeetingBtn) {
+        instantMeetingBtn.addEventListener('click', startInstantMeeting);
+    }
+    
+    if (scheduleMeetingBtn) {
+        scheduleMeetingBtn.addEventListener('click', function() {
+            meetingForm.style.display = 'block';
+            meetingSuccess.style.display = 'none';
+        });
+    }
+    
+    if (createMeetingBtn) {
+        createMeetingBtn.addEventListener('click', scheduleMeeting);
+    }
+    
+    if (copyMeetingLinkBtn) {
+        copyMeetingLinkBtn.addEventListener('click', copyMeetingLink);
+    }
+    
+    if (sendMeetingInvitesBtn) {
+        sendMeetingInvitesBtn.addEventListener('click', sendMeetingInvites);
+    }
+    
+    // Check for scheduled meetings and show notifications
+    checkScheduledMeetings();
+    
+    // Set interval to check for meetings every 5 minutes
+    setInterval(checkScheduledMeetings, 5 * 60 * 1000);
+}
+
+// Open meeting modal
+function openMeetingModal() {
+    meetingModal.style.display = 'block';
+    meetingForm.style.display = 'none';
+    meetingSuccess.style.display = 'none';
+    
+    // Hide meeting notification if shown
+    if (meetingNotification) {
+        meetingNotification.style.display = 'none';
+    }
+}
+
+// Close meeting modal
+function closeMeetingModal() {
+    meetingModal.style.display = 'none';
+}
+
+// Populate meeting participants dropdown with staff
+function populateMeetingParticipants() {
+    const participantsSelect = document.getElementById('meeting-participants');
+    if (!participantsSelect || !allStaff) return;
+    
+    // Clear existing options
+    participantsSelect.innerHTML = '';
+    
+    // Add all staff members as options
+    allStaff.forEach(staff => {
+        const option = document.createElement('option');
+        option.value = staff.username;
+        option.textContent = staff.name;
+        // Select all staff by default
+        option.selected = true;
+        participantsSelect.appendChild(option);
+    });
+}
+
+// Start instant meeting
+function startInstantMeeting() {
+    // In a real application, this would make an API call to create a meeting
+    // For this simulation, we'll generate a mock meeting ID and URL
+    
+    const meetingId = generateMeetingId();
+    const meetingUrl = `https://meeting.shiftq.com/${meetingId}`;
+    
+    // Store the meeting in local storage
+    const meeting = {
+        id: meetingId,
+        type: 'instant',
+        title: 'Instant Meeting',
+        created_by: 'admin',
+        created_at: new Date().toISOString(),
+        url: meetingUrl,
+        status: 'active'
+    };
+    
+    // Add to stored meetings
+    saveMeeting(meeting);
+    
+    // Notify staff of the meeting
+    notifyStaffOfMeeting(meeting);
+    
+    // Display success message
+    meetingDetails.innerHTML = `
+        <p><strong>Meeting ID:</strong> ${meeting.id}</p>
+        <p><strong>Meeting URL:</strong> <a href="${meeting.url}" target="_blank">${meeting.url}</a></p>
+        <p><strong>Type:</strong> Instant Meeting</p>
+        <p><strong>Created by:</strong> You</p>
+        <p><strong>Created on:</strong> ${new Date().toLocaleString()}</p>
+    `;
+    
+    meetingDetails.dataset.meetingUrl = meeting.url;
+    meetingForm.style.display = 'none';
+    meetingSuccess.style.display = 'block';
+    
+    // In a real application, you might open the meeting in a new tab
+    // window.open(meetingUrl, '_blank');
+}
+
+// Schedule a meeting
+function scheduleMeeting() {
+    const titleInput = document.getElementById('meeting-title');
+    const dateInput = document.getElementById('meeting-date');
+    const timeInput = document.getElementById('meeting-time');
+    const durationInput = document.getElementById('meeting-duration');
+    const participantsSelect = document.getElementById('meeting-participants');
+    const descriptionInput = document.getElementById('meeting-description');
+    
+    // Validate required fields
+    if (!titleInput.value || !dateInput.value || !timeInput.value) {
+        showToast('Please fill in all required fields');
+        return;
+    }
+    
+    // Get selected participants
+    const selectedParticipants = Array.from(participantsSelect.selectedOptions).map(option => {
+        return {
+            username: option.value,
+            name: option.textContent
+        };
+    });
+    
+    // Generate meeting details
+    const meetingId = generateMeetingId();
+    const meetingUrl = `https://meeting.shiftq.com/${meetingId}`;
+    const meetingDate = new Date(`${dateInput.value}T${timeInput.value}`);
+    
+    // Create meeting object
+    const meeting = {
+        id: meetingId,
+        type: 'scheduled',
+        title: titleInput.value,
+        description: descriptionInput.value,
+        date: dateInput.value,
+        time: timeInput.value,
+        duration: durationInput.value,
+        url: meetingUrl,
+        participants: selectedParticipants,
+        created_by: 'admin',
+        created_at: new Date().toISOString(),
+        status: 'scheduled'
+    };
+    
+    // Save meeting
+    saveMeeting(meeting);
+    
+    // Notify staff of scheduled meeting
+    notifyStaffOfMeeting(meeting);
+    
+    // Format date and time for display
+    const formattedDate = meetingDate.toLocaleDateString();
+    const formattedTime = meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // Show success message
+    meetingDetails.innerHTML = `
+        <p><strong>Title:</strong> ${meeting.title}</p>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p><strong>Time:</strong> ${formattedTime}</p>
+        <p><strong>Duration:</strong> ${meeting.duration} minutes</p>
+        <p><strong>Meeting URL:</strong> <a href="${meeting.url}" target="_blank">${meeting.url}</a></p>
+        ${meeting.description ? `<p><strong>Description:</strong> ${meeting.description}</p>` : ''}
+        <p><strong>Participants:</strong> ${selectedParticipants.length > 0 ? 
+            selectedParticipants.map(p => p.name).join(', ') : 
+            'None selected'}</p>
+    `;
+    
+    meetingDetails.dataset.meetingUrl = meeting.url;
+    meetingForm.style.display = 'none';
+    meetingSuccess.style.display = 'block';
+    
+    // Reset form
+    titleInput.value = '';
+    descriptionInput.value = '';
+}
+
+// Copy meeting link to clipboard
+function copyMeetingLink() {
+    const meetingUrl = meetingDetails.dataset.meetingUrl;
+    if (meetingUrl) {
+        navigator.clipboard.writeText(meetingUrl).then(
+            () => showToast('Meeting link copied to clipboard!'),
+            () => showToast('Failed to copy meeting link')
+        );
+    }
+}
+
+// Send meeting invites to participants
+function sendMeetingInvites() {
+    // In a real application, this would send emails or notifications to participants
+    // For this simulation, we'll just add a notification to localStorage
+    
+    showToast('Meeting invites sent to participants!');
+    
+    // Here we would also update the meeting status to 'invites_sent'
+    // and refresh the meetings list
+}
+
+// Generate a unique meeting ID
+function generateMeetingId() {
+    return 'meet_' + Math.random().toString(36).substring(2, 10);
+}
+
+// Save meeting to localStorage
+function saveMeeting(meeting) {
+    const meetings = JSON.parse(localStorage.getItem('scheduledMeetings') || '[]');
+    meetings.push(meeting);
+    localStorage.setItem('scheduledMeetings', JSON.stringify(meetings));
+    localStorage.setItem('meetingsLastUpdated', new Date().toISOString());
+}
+
+// Notify staff of meeting
+function notifyStaffOfMeeting(meeting) {
+    // In a real application, this would send notifications to staff
+    // For this simulation, we'll create a notification in localStorage
+    
+    const notifications = JSON.parse(localStorage.getItem('meetingNotifications') || '[]');
+    const notification = {
+        id: 'notification_' + Date.now(),
+        type: meeting.type === 'instant' ? 'instant_meeting' : 'scheduled_meeting',
+        title: meeting.title || 'New Meeting',
+        meeting_id: meeting.id,
+        created_at: new Date().toISOString(),
+        read: false
+    };
+    
+    notifications.push(notification);
+    localStorage.setItem('meetingNotifications', JSON.stringify(notifications));
+}
+
+// Check for scheduled meetings and show notification
+function checkScheduledMeetings() {
+    const meetings = JSON.parse(localStorage.getItem('scheduledMeetings') || '[]');
+    
+    // Filter for upcoming meetings (within the next 30 minutes)
+    const now = new Date();
+    const upcomingMeetings = meetings.filter(meeting => {
+        // Skip if it's not a scheduled meeting
+        if (meeting.type !== 'scheduled') return false;
+        
+        // Parse meeting date and time
+        const meetingDateTime = new Date(`${meeting.date}T${meeting.time}`);
+        
+        // Check if meeting is within the next 30 minutes
+        const timeDiff = meetingDateTime - now;
+        return timeDiff > 0 && timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
+    });
+    
+    // If there are upcoming meetings, show notification
+    if (upcomingMeetings.length > 0) {
+        // Update meeting notification badge
+        if (meetingNotification) {
+            meetingNotification.textContent = upcomingMeetings.length;
+            meetingNotification.style.display = 'flex';
+        }
+        
+        // Add a notification to the notifications list
+        for (const meeting of upcomingMeetings) {
+            // Check if we've already notified for this meeting
+            const notifiedMeetings = JSON.parse(localStorage.getItem('notifiedMeetings') || '[]');
+            if (notifiedMeetings.includes(meeting.id)) continue;
+            
+            // Add notification
+            addMeetingNotification(meeting);
+            
+            // Mark as notified
+            notifiedMeetings.push(meeting.id);
+            localStorage.setItem('notifiedMeetings', JSON.stringify(notifiedMeetings));
+        }
+    }
+}
+
+// Add a meeting notification to the notifications list
+function addMeetingNotification(meeting) {
+    const notificationList = document.getElementById('notification-list');
+    if (!notificationList) return;
+    
+    // Create notification element
+    const notificationItem = document.createElement('div');
+    notificationItem.className = 'notification-item unread';
+    notificationItem.dataset.id = 'meeting_' + meeting.id;
+    
+    // Format meeting time
+    const meetingTime = new Date(`${meeting.date}T${meeting.time}`);
+    const formattedTime = meetingTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    notificationItem.innerHTML = `
+        <div class="notification-icon meeting-notification">
+            <i class="fas fa-video"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Upcoming Meeting: ${meeting.title}</div>
+            <div class="notification-message">
+                A meeting is scheduled for today at ${formattedTime}. 
+                ${meeting.participants?.length ? 
+                    `Participants: ${meeting.participants.map(p => p.name).join(', ')}` : ''}
+            </div>
+            <div class="notification-time">Starting soon</div>
+        </div>
+        <div class="notification-actions">
+            <button class="btn-action read-notification" data-id="meeting_${meeting.id}" title="Mark as read">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    `;
+    
+    // Insert at the top of the notifications list
+    notificationList.insertBefore(notificationItem, notificationList.firstChild);
+    
+    // Update unread count
+    updateNotificationCount();
+}
+
+// Update notification count badge
+function updateNotificationCount() {
+    // Count unread notifications
+    const unreadNotifications = document.querySelectorAll('.notification-item.unread');
+    const notificationCountBadge = document.querySelector('.notification-count');
+    const notificationBadge = document.querySelector('.notification-badge');
+    
+    if (notificationCountBadge) {
+        notificationCountBadge.textContent = unreadNotifications.length;
+    }
+    
+    if (notificationBadge) {
+        notificationBadge.textContent = unreadNotifications.length;
+    }
+}
+
+// Show toast notification
+function showToast(message, duration = 3000) {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.left = '50%';
+        toastContainer.style.transform = 'translateX(-50%)';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.style.backgroundColor = '#323232';
+    toast.style.color = 'white';
+    toast.style.padding = '12px 24px';
+    toast.style.marginBottom = '10px';
+    toast.style.borderRadius = '4px';
+    toast.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    toast.textContent = message;
+    
+    // Append to container and animate
+    toastContainer.appendChild(toast);
+    
+    // Trigger animation (wait a bit for the DOM to update)
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+    
+    // Hide after duration
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toastContainer.removeChild(toast);
+        }, 300); // Wait for fade out animation
+    }, duration);
 }

@@ -501,6 +501,95 @@ def approve_shift_change():
     
     return jsonify({"status": "error", "message": "Shift change request not found"}), 404
 
+# Meeting management routes
+@app.route('/create_meeting', methods=['POST'])
+def create_meeting():
+    """Create a new meeting"""
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
+    
+    data = request.json
+    meeting_type = data.get('meeting_type')  # 'instant' or 'scheduled'
+    
+    # For instant meeting
+    if meeting_type == 'instant':
+        # Generate a unique meeting ID
+        meeting_id = f"meeting-{uuid.uuid4()}"
+        meeting_url = f"https://meet.jit.si/{meeting_id}"
+        
+        return jsonify({
+            "status": "success", 
+            "meeting": {
+                "id": meeting_id,
+                "url": meeting_url,
+                "type": "instant",
+                "created_by": session['username'],
+                "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        })
+    
+    # For scheduled meeting
+    elif meeting_type == 'scheduled':
+        title = data.get('title')
+        date = data.get('date')
+        time = data.get('time')
+        duration = data.get('duration')
+        participants = data.get('participants')
+        description = data.get('description')
+        
+        # Validate required fields
+        if not all([title, date, time, duration]):
+            return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        
+        # Generate a unique meeting ID
+        meeting_id = f"meeting-{uuid.uuid4()}"
+        meeting_url = f"https://meet.jit.si/{meeting_id}"
+        
+        # Create meeting object
+        meeting = {
+            "id": meeting_id,
+            "url": meeting_url,
+            "type": "scheduled",
+            "title": title,
+            "date": date,
+            "time": time,
+            "duration": duration,
+            "participants": participants or [],
+            "description": description or "",
+            "created_by": session['username'],
+            "created_by_name": session['name'],
+            "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "status": "scheduled"
+        }
+        
+        # In a real app, we would save this meeting to a database
+        # For now, we'll just return it
+        return jsonify({
+            "status": "success",
+            "meeting": meeting
+        })
+    
+    else:
+        return jsonify({"status": "error", "message": "Invalid meeting type"}), 400
+
+@app.route('/get_staff_list', methods=['GET'])
+def get_staff_list():
+    """Get a list of all staff for meeting participants selection"""
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
+    
+    staff = load_data(STAFF_FILE)
+    
+    staff_list = []
+    for username, user_data in staff.items():
+        if user_data['role'] == 'staff':
+            staff_list.append({
+                "username": username,
+                "name": user_data['name']
+            })
+    
+    return jsonify({"status": "success", "staff": staff_list})
+
 # Run the app
 if __name__ == '__main__':
     initialize_data_files()

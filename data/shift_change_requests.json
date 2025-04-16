@@ -82,5 +82,26 @@
         "target_accepted": false,
         "admin_approved": false,
         "submitted_on": "2025-04-15 22:12:36"
+    },
+    {
+        "id": "0c108068-eabe-4f95-944a-81a6f8e0ef4e",
+        "requesting_username": "john",
+        "requesting_name": "John Doe",
+        "shift_id": "a10207da-8af7-49c0-b8cf-f6048a2d263c",
+        "shift_details": {
+            "date": "2025-04-15",
+            "time": "17:37:12",
+            "branch": "Headquarters",
+            "role": "Manager"
+        },
+        "target_username": "jane",
+        "target_name": "Jane Smith",
+        "target_shift_id": null,
+        "target_shift_details": null,
+        "reason": "am open for a meeting\n",
+        "status": "pending",
+        "target_accepted": false,
+        "admin_approved": false,
+        "submitted_on": "2025-04-16 10:49:09"
     }
 ]
