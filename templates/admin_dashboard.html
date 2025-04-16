@@ -2410,24 +2410,189 @@
 
     <script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <!-- Add Google Maps API with the provided key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyArzNFK7bJtEq3bGEBkEZrtUOm0JloIFFQ&callback=initMap" async defer></script>
     <script>
-        // Update display format for active staff and leave requests tables
-        function updateActiveStaffTable(shifts) {
-            // This part is handled by the existing admin.js file
-            // But we need to make sure long location text is handled properly
-            document.addEventListener('DOMContentLoaded', function() {
-                // Add mouseover event to show full text for truncated content
-                document.body.addEventListener('mouseover', function(e) {
-                    if (e.target.classList.contains('truncate') || e.target.classList.contains('truncate-sm')) {
-                        if (e.target.offsetWidth < e.target.scrollWidth) {
-                            e.target.title = e.target.textContent;
-                        }
+        // Global variables for map functionality
+        let staffLocationMap = null;
+        let activeMarkers = [];
+        let activeInfoWindow = null;
+
+        // Initialize Google Maps
+        function initMap() {
+            // Create a map centered on a default location (Nairobi as placeholder)
+            const defaultCenter = { lat: -1.286389, lng: 36.817223 };
+            
+            // Initialize map with a clean, simple style
+            staffLocationMap = new google.maps.Map(document.getElementById('staff-location-map'), {
+                center: defaultCenter,
+                zoom: 12,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: [
+                    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+                    { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] }
+                ],
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: true,
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_BOTTOM
+                }
+            });
+            
+            // Remove map placeholder after map loads
+            google.maps.event.addListenerOnce(staffLocationMap, 'idle', function() {
+                const mapPlaceholder = document.querySelector('.map-placeholder');
+                if (mapPlaceholder) {
+                    mapPlaceholder.style.display = 'none';
+                }
+            });
+            
+            // Load active staff locations immediately
+            loadActiveStaffLocations();
+            
+            // Set interval to refresh staff locations every 60 seconds
+            setInterval(loadActiveStaffLocations, 60000);
+        }
+        
+        // Function to load active staff locations from the server
+        function loadActiveStaffLocations() {
+            fetch('/get_shifts')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Filter for only active staff (not clocked out)
+                        const activeStaff = data.shifts.filter(shift => shift.clock_out_time === null);
+                        displayStaffLocations(activeStaff);
+                    }
+                })
+                .catch(error => console.error('Error loading staff locations:', error));
+        }
+        
+        // Function to display staff locations on the map
+        function displayStaffLocations(activeStaff) {
+            // Clear existing markers
+            clearMarkers();
+            
+            if (!activeStaff || activeStaff.length === 0) {
+                // Show "no active staff" message if needed
+                console.log('No active staff with location data found');
+                return;
+            }
+            
+            // Create bounds to fit all markers
+            const bounds = new google.maps.LatLngBounds();
+            let hasValidLocations = false;
+            
+            // Add markers for each active staff member
+            activeStaff.forEach(staff => {
+                if (!staff.clock_in_location || 
+                    !staff.clock_in_location.latitude || 
+                    !staff.clock_in_location.longitude) {
+                    return;
+                }
+                
+                // Parse coordinates to numbers
+                const lat = parseFloat(staff.clock_in_location.latitude);
+                const lng = parseFloat(staff.clock_in_location.longitude);
+                
+                // Skip if invalid coordinates
+                if (isNaN(lat) || isNaN(lng)) {
+                    return;
+                }
+                
+                hasValidLocations = true;
+                const position = { lat, lng };
+                
+                // Create a red pin marker
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: staffLocationMap,
+                    title: staff.name,
+                    animation: google.maps.Animation.DROP,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: '#fa5252',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2,
+                        scale: 8
                     }
                 });
+                
+                // Format clock in time
+                const clockInTime = formatTime(new Date(staff.clock_in_time));
+                
+                // Create info window with staff details
+                const infoContent = `
+                    <div style="padding: 10px; max-width: 240px;">
+                        <h4 style="margin-top: 0; color: #4c6ef5; margin-bottom: 8px;">${staff.name}</h4>
+                        <div style="margin-bottom: 5px;"><strong>Role:</strong> ${staff.role}</div>
+                        <div style="margin-bottom: 5px;"><strong>Branch:</strong> ${staff.branch}</div>
+                        <div style="margin-bottom: 5px;"><strong>Clock In:</strong> ${clockInTime}</div>
+                        <div style="margin-bottom: 0;"><strong>Location:</strong> ${staff.clock_in_location.address || 'Address not available'}</div>
+                    </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoContent,
+                    maxWidth: 300
+                });
+                
+                // Add click event for the marker
+                marker.addListener('click', function() {
+                    // Close any open info windows
+                    if (activeInfoWindow) {
+                        activeInfoWindow.close();
+                    }
+                    
+                    // Open this info window
+                    infoWindow.open(staffLocationMap, marker);
+                    activeInfoWindow = infoWindow;
+                });
+                
+                // Add marker to our collection
+                activeMarkers.push(marker);
+                
+                // Extend bounds to include this marker
+                bounds.extend(position);
             });
+            
+            // Fit map to markers if we have valid locations
+            if (hasValidLocations) {
+                // Don't zoom in too far if only one marker
+                if (activeMarkers.length === 1) {
+                    staffLocationMap.setCenter(bounds.getCenter());
+                    staffLocationMap.setZoom(14);
+                } else {
+                    staffLocationMap.fitBounds(bounds);
+                    
+                    // Add some padding to the bounds
+                    const padded = google.maps.event.addListenerOnce(
+                        staffLocationMap, 
+                        'bounds_changed', 
+                        () => {
+                            staffLocationMap.setZoom(Math.min(15, staffLocationMap.getZoom()));
+                        }
+                    );
+                }
+            }
+        }
+        
+        // Clear all markers from the map
+        function clearMarkers() {
+            if (activeMarkers.length) {
+                activeMarkers.forEach(marker => marker.setMap(null));
+                activeMarkers = [];
+            }
+        }
+        
+        // Format time for display
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Enhanced navigation bar functionality
+        // Enhance navigation bar functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Sticky header effect
             const header = document.getElementById('dashboard-header');
@@ -2507,6 +2672,18 @@
                 e.preventDefault();
                 // Show preferences modal
                 alert('Preferences page will be implemented in future updates.');
+            });
+            
+            // Handle resizing the map when tabs change
+            document.querySelectorAll('.admin-sidebar nav ul li').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (this.getAttribute('data-tab') === 'dashboard' && staffLocationMap) {
+                        // Trigger resize after a short delay to ensure the map container is visible
+                        setTimeout(() => {
+                            google.maps.event.trigger(staffLocationMap, 'resize');
+                        }, 100);
+                    }
+                });
             });
         });
 
