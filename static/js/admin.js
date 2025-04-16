@@ -3849,13 +3849,25 @@ function handleClockInEvent(event) {
         role: event.data.role,
         clock_in_time: event.data.timestamp,
         clock_out_time: null,
-        clock_in_location: { address: 'Current location' },
-        id: `shift-${Date.now()}`
+        clock_in_location: { address: event.data.location || 'Current location' },
+        id: event.data.shiftId || `shift-${Date.now()}`,
+        isNew: true // Mark as new for highlighting
     };
     
     // Add to allShifts array to ensure it persists on page reload
     if (Array.isArray(allShifts)) {
-        allShifts.push(newActiveStaff);
+        // Check if this staff member already has an active shift
+        const existingActiveShiftIndex = allShifts.findIndex(
+            shift => shift.name === event.staffName && shift.clock_out_time === null
+        );
+        
+        if (existingActiveShiftIndex >= 0) {
+            // Replace existing active shift
+            allShifts[existingActiveShiftIndex] = newActiveStaff;
+        } else {
+            // Add new shift
+            allShifts.push(newActiveStaff);
+        }
     }
     
     // Force update the active staff display immediately
@@ -3885,10 +3897,12 @@ function updateActiveStaffTable(activeShifts) {
         return;
     }
     
+    // Force refresh
     let html = '';
     activeShifts.forEach(shift => {
-        const isNew = shift.isNew ? ' class="new-active-staff"' : '';
+        const isNew = shift.isNew ? ' class="new-active-staff highlight-animation"' : '';
         const clockInTime = formatDateTime(shift.clock_in_time);
+        const locationAddress = shift.clock_in_location ? shift.clock_in_location.address : 'Location data unavailable';
         
         html += `
             <tr${isNew} data-staff-id="${shift.id || ''}" data-staff-name="${shift.name || ''}">
@@ -3896,23 +3910,39 @@ function updateActiveStaffTable(activeShifts) {
                 <td>${shift.branch}</td>
                 <td>${shift.role}</td>
                 <td>${clockInTime}</td>
-                <td>${shift.clock_in_location ? shift.clock_in_location.address : 'Location data unavailable'}</td>
+                <td>${locationAddress}</td>
             </tr>
         `;
+        
+        // Remove the isNew flag after the table is updated
+        if (shift.isNew) shift.isNew = false;
     });
     
+    // Update the table
     activeStaffTable.innerHTML = html;
     
-    // Add highlight animation to new entries
-    document.querySelectorAll('.new-active-staff').forEach(row => {
-        row.classList.add('highlight-animation');
-        
-        // Remove highlighting classes after animation completes
-        setTimeout(() => {
-            row.classList.remove('highlight-animation');
-            row.classList.remove('new-active-staff');
-        }, 3000);
-    });
+    // Add CSS for highlighting if it doesn't exist
+    if (!document.getElementById('active-staff-highlight-style')) {
+        const style = document.createElement('style');
+        style.id = 'active-staff-highlight-style';
+        style.textContent = `
+            @keyframes highlightFade {
+                0% { background-color: rgba(46, 204, 113, 0.3); }
+                100% { background-color: transparent; }
+            }
+            
+            .highlight-animation {
+                animation: highlightFade 5s ease-out;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Update dashboard counts to reflect changes
+    const presentCount = document.getElementById('present-count');
+    if (presentCount) {
+        presentCount.textContent = activeShifts.length;
+    }
 }
 
 // Single consolidated function for handling leave request events
@@ -4593,4 +4623,554 @@ function addRealTimeIndicator(table) {
         `;
         document.head.appendChild(css);
     }
+}
+
+// Shift Configuration DOM Elements
+const shiftNameInput = document.getElementById('shift-name');
+const shiftColorInput = document.getElementById('shift-color');
+const shiftStartInput = document.getElementById('shift-start');
+const shiftEndInput = document.getElementById('shift-end');
+const shiftBranchInput = document.getElementById('shift-branch');
+const shiftCapacityInput = document.getElementById('shift-capacity');
+const shiftNotesInput = document.getElementById('shift-notes');
+const addShiftBtn = document.getElementById('add-shift');
+const resetShiftFormBtn = document.getElementById('reset-shift-form');
+const shiftsListContainer = document.getElementById('shifts-list');
+const shiftFilterBranch = document.getElementById('shift-filter-branch');
+const shiftSearchInput = document.getElementById('shift-search');
+
+// Global variable to store shifts
+let allShiftTypes = [];
+let currentEditingShiftId = null;
+
+// Initialize shift configuration
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners for shift configuration
+    if (addShiftBtn) {
+        addShiftBtn.addEventListener('click', handleAddShift);
+    }
+    
+    if (resetShiftFormBtn) {
+        resetShiftFormBtn.addEventListener('click', resetShiftForm);
+    }
+    
+    if (shiftFilterBranch) {
+        shiftFilterBranch.addEventListener('change', filterShifts);
+    }
+    
+    if (shiftSearchInput) {
+        shiftSearchInput.addEventListener('input', filterShifts);
+    }
+    
+    // Load shifts initially
+    loadShiftTypes();
+    
+    // Populate branch selector
+    populateShiftBranchSelector();
+});
+
+// Load all shift types
+function loadShiftTypes() {
+    if (!shiftsListContainer) return;
+    
+    shiftsListContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading shifts...</div>';
+    
+    // In a real app, fetch this data from server
+    // For this example, we'll use hardcoded data with a setTimeout to simulate server call
+    setTimeout(() => {
+        allShiftTypes = [
+            {
+                id: 'shift1',
+                name: 'Morning Shift',
+                color: '#4c6ef5',
+                startTime: '07:00',
+                endTime: '15:00',
+                branch: 'All Branches',
+                capacity: 5,
+                days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+                notes: 'Regular morning shift'
+            },
+            {
+                id: 'shift2',
+                name: 'Afternoon Shift',
+                color: '#fd7e14',
+                startTime: '15:00',
+                endTime: '23:00',
+                branch: 'Headquarters',
+                capacity: 4,
+                days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+                notes: 'Afternoon coverage with weekend hours'
+            },
+            {
+                id: 'shift3',
+                name: 'Night Shift',
+                color: '#6f42c1',
+                startTime: '23:00',
+                endTime: '07:00',
+                branch: 'All Branches',
+                capacity: 3,
+                days: ['mon', 'tue', 'wed', 'thu', 'sun'],
+                notes: 'Reduced staff for overnight coverage'
+            },
+            {
+                id: 'shift4',
+                name: 'Weekend Shift',
+                color: '#20c997',
+                startTime: '09:00',
+                endTime: '17:00',
+                branch: 'Downtown',
+                capacity: 3,
+                days: ['sat', 'sun'],
+                notes: 'Weekend coverage'
+            }
+        ];
+        
+        displayShiftTypes(allShiftTypes);
+        
+        // Also populate filter dropdown with branches
+        populateShiftBranchFilters();
+    }, 500);
+}
+
+// Display shift types in the list
+function displayShiftTypes(shifts) {
+    if (!shiftsListContainer) return;
+    
+    if (shifts.length === 0) {
+        shiftsListContainer.innerHTML = '<div class="empty-message">No shifts configured yet.</div>';
+        return;
+    }
+    
+    let html = '';
+    shifts.forEach(shift => {
+        // Create weekday pills
+        let weekdayPills = '';
+        if (shift.days && shift.days.length > 0) {
+            weekdayPills = '<div class="weekday-pills">';
+            const dayMap = {
+                'mon': 'Mon',
+                'tue': 'Tue',
+                'wed': 'Wed',
+                'thu': 'Thu',
+                'fri': 'Fri',
+                'sat': 'Sat',
+                'sun': 'Sun'
+            };
+            
+            shift.days.forEach(day => {
+                weekdayPills += `<span class="weekday-pill">${dayMap[day] || day}</span>`;
+            });
+            weekdayPills += '</div>';
+        }
+        
+        html += `
+            <div class="shift-item" data-shift-id="${shift.id}" style="border-left-color: ${shift.color}">
+                <div class="shift-color" style="background-color: ${shift.color}"></div>
+                <div class="shift-info">
+                    <div class="shift-title">${shift.name}</div>
+                    <div class="shift-details">
+                        <div class="shift-detail">
+                            <i class="fas fa-clock"></i> ${shift.startTime} - ${shift.endTime}
+                        </div>
+                        <div class="shift-detail">
+                            <i class="fas fa-building"></i> ${shift.branch}
+                        </div>
+                        <div class="shift-detail">
+                            <span class="shift-capacity-badge">
+                                <i class="fas fa-users"></i> ${shift.capacity}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="shift-weekdays">
+                        ${weekdayPills}
+                    </div>
+                </div>
+                <div class="shift-actions">
+                    <button class="shift-action-btn edit" data-id="${shift.id}" title="Edit shift">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="shift-action-btn copy" data-id="${shift.id}" title="Duplicate shift">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="shift-action-btn delete" data-id="${shift.id}" title="Delete shift">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    shiftsListContainer.innerHTML = html;
+    
+    // Add event listeners to action buttons
+    document.querySelectorAll('.shift-action-btn.edit').forEach(btn => {
+        btn.addEventListener('click', editShiftType);
+    });
+    
+    document.querySelectorAll('.shift-action-btn.delete').forEach(btn => {
+        btn.addEventListener('click', deleteShiftType);
+    });
+    
+    document.querySelectorAll('.shift-action-btn.copy').forEach(btn => {
+        btn.addEventListener('click', duplicateShiftType);
+    });
+}
+
+// Filter shifts based on search and branch filter
+function filterShifts() {
+    const searchTerm = shiftSearchInput ? shiftSearchInput.value.toLowerCase() : '';
+    const branchFilter = shiftFilterBranch ? shiftFilterBranch.value : '';
+    
+    let filtered = [...allShiftTypes];
+    
+    // Filter by branch
+    if (branchFilter) {
+        filtered = filtered.filter(shift => 
+            shift.branch === branchFilter || shift.branch === 'All Branches'
+        );
+    }
+    
+    // Filter by search term
+    if (searchTerm) {
+        filtered = filtered.filter(shift => 
+            shift.name.toLowerCase().includes(searchTerm) ||
+            shift.notes?.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    // Display filtered shifts
+    displayShiftTypes(filtered);
+}
+
+// Handle add/edit shift button click
+function handleAddShift() {
+    // Validate form
+    if (!validateShiftForm()) return;
+    
+    // Get values from form
+    const name = shiftNameInput.value;
+    const color = shiftColorInput.value;
+    const startTime = shiftStartInput.value;
+    const endTime = shiftEndInput.value;
+    const branch = shiftBranchInput.value;
+    const capacity = parseInt(shiftCapacityInput.value);
+    const notes = shiftNotesInput.value;
+    
+    // Get selected weekdays
+    const selectedDays = [];
+    document.querySelectorAll('.weekday-checkbox:checked').forEach(checkbox => {
+        selectedDays.push(checkbox.value);
+    });
+    
+    if (currentEditingShiftId) {
+        // Update existing shift
+        const shiftIndex = allShiftTypes.findIndex(shift => shift.id === currentEditingShiftId);
+        if (shiftIndex !== -1) {
+            allShiftTypes[shiftIndex] = {
+                ...allShiftTypes[shiftIndex],
+                name,
+                color,
+                startTime,
+                endTime,
+                branch,
+                capacity,
+                days: selectedDays,
+                notes
+            };
+            
+            // Show success message
+            showToast('Shift updated successfully!');
+        }
+    } else {
+        // Add new shift
+        const newShift = {
+            id: 'shift' + Date.now(),
+            name,
+            color,
+            startTime,
+            endTime,
+            branch,
+            capacity,
+            days: selectedDays,
+            notes
+        };
+        
+        allShiftTypes.push(newShift);
+        
+        // Show success message
+        showToast('New shift added successfully!');
+    }
+    
+    // Reset form
+    resetShiftForm();
+    
+    // Display updated shifts
+    displayShiftTypes(allShiftTypes);
+}
+
+// Validate shift form
+function validateShiftForm() {
+    // Check required fields
+    if (!shiftNameInput.value) {
+        showToast('Please enter a shift name', 'warning');
+        shiftNameInput.focus();
+        return false;
+    }
+    
+    if (!shiftStartInput.value) {
+        showToast('Please enter a start time', 'warning');
+        shiftStartInput.focus();
+        return false;
+    }
+    
+    if (!shiftEndInput.value) {
+        showToast('Please enter an end time', 'warning');
+        shiftEndInput.focus();
+        return false;
+    }
+    
+    // Check if capacity is a positive number
+    if (isNaN(shiftCapacityInput.value) || parseInt(shiftCapacityInput.value) <= 0) {
+        showToast('Capacity must be a positive number', 'warning');
+        shiftCapacityInput.focus();
+        return false;
+    }
+    
+    // Check if at least one weekday is selected
+    const selectedDays = document.querySelectorAll('.weekday-checkbox:checked');
+    if (selectedDays.length === 0) {
+        showToast('Please select at least one day of the week', 'warning');
+        return false;
+    }
+    
+    return true;
+}
+
+// Reset shift form
+function resetShiftForm() {
+    // Reset form fields
+    shiftNameInput.value = '';
+    shiftColorInput.value = '#4c6ef5';
+    shiftStartInput.value = '';
+    shiftEndInput.value = '';
+    shiftBranchInput.value = '';
+    shiftCapacityInput.value = '1';
+    shiftNotesInput.value = '';
+    
+    // Uncheck all weekday checkboxes
+    document.querySelectorAll('.weekday-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Reset current editing ID
+    currentEditingShiftId = null;
+    
+    // Update button text
+    if (addShiftBtn) {
+        addShiftBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Shift';
+    }
+}
+
+// Edit shift type
+function editShiftType(event) {
+    const shiftId = event.currentTarget.getAttribute('data-id');
+    const shift = allShiftTypes.find(s => s.id === shiftId);
+    
+    if (!shift) return;
+    
+    // Fill form with shift data
+    shiftNameInput.value = shift.name;
+    shiftColorInput.value = shift.color;
+    shiftStartInput.value = shift.startTime;
+    shiftEndInput.value = shift.endTime;
+    shiftBranchInput.value = shift.branch;
+    shiftCapacityInput.value = shift.capacity;
+    shiftNotesInput.value = shift.notes || '';
+    
+    // Check appropriate weekday checkboxes
+    document.querySelectorAll('.weekday-checkbox').forEach(checkbox => {
+        checkbox.checked = shift.days && shift.days.includes(checkbox.value);
+    });
+    
+    // Set current editing ID
+    currentEditingShiftId = shiftId;
+    
+    // Update button text
+    if (addShiftBtn) {
+        addShiftBtn.innerHTML = '<i class="fas fa-save"></i> Update Shift';
+    }
+    
+    // Scroll to form
+    shiftNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Focus on the name input
+    shiftNameInput.focus();
+}
+
+// Delete shift type
+function deleteShiftType(event) {
+    const shiftId = event.currentTarget.getAttribute('data-id');
+    
+    // Confirm deletion
+    if (confirm('Are you sure you want to delete this shift?')) {
+        // Remove from array
+        allShiftTypes = allShiftTypes.filter(shift => shift.id !== shiftId);
+        
+        // Display updated shifts
+        displayShiftTypes(allShiftTypes);
+        
+        // Show success message
+        showToast('Shift deleted successfully!');
+    }
+}
+
+// Duplicate shift type
+function duplicateShiftType(event) {
+    const shiftId = event.currentTarget.getAttribute('data-id');
+    const shift = allShiftTypes.find(s => s.id === shiftId);
+    
+    if (!shift) return;
+    
+    // Create a copy with a new ID
+    const newShift = {
+        ...shift,
+        id: 'shift' + Date.now(),
+        name: `${shift.name} (Copy)`
+    };
+    
+    // Add to array
+    allShiftTypes.push(newShift);
+    
+    // Display updated shifts
+    displayShiftTypes(allShiftTypes);
+    
+    // Show success message
+    showToast('Shift duplicated successfully!');
+}
+
+// Populate branch selector for shift configuration
+function populateShiftBranchSelector() {
+    if (!shiftBranchInput) return;
+    
+    // Clear existing options except the first one
+    while (shiftBranchInput.options.length > 0) {
+        shiftBranchInput.remove(0);
+    }
+    
+    // Add "All Branches" option
+    const allBranchesOption = document.createElement('option');
+    allBranchesOption.value = 'All Branches';
+    allBranchesOption.textContent = 'All Branches';
+    shiftBranchInput.appendChild(allBranchesOption);
+    
+    // Add branches from global branches object
+    for (const branchId in allBranches) {
+        const branch = allBranches[branchId];
+        const option = document.createElement('option');
+        option.value = branch.name;
+        option.textContent = branch.name;
+        shiftBranchInput.appendChild(option);
+    }
+}
+
+// Populate branch filter for shift list
+function populateShiftBranchFilters() {
+    if (!shiftFilterBranch) return;
+    
+    // Clear existing options except the first one
+    while (shiftFilterBranch.options.length > 0) {
+        shiftFilterBranch.remove(0);
+    }
+    
+    // Add empty option for "All"
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Branches';
+    shiftFilterBranch.appendChild(allOption);
+    
+    // Get unique branches from shifts
+    const branches = new Set(allShiftTypes.map(shift => shift.branch));
+    
+    // Add branch options
+    branches.forEach(branch => {
+        if (branch && branch !== 'All Branches') {
+            const option = document.createElement('option');
+            option.value = branch;
+            option.textContent = branch;
+            shiftFilterBranch.appendChild(option);
+        }
+    });
+}
+
+// Show toast notification 
+function showToast(message, type = 'success') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.top = '20px';
+        toastContainer.style.right = '20px';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.style.minWidth = '250px';
+    toast.style.margin = '10px';
+    toast.style.padding = '15px';
+    toast.style.borderRadius = '4px';
+    toast.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    toast.style.backgroundColor = type === 'warning' ? '#fff3cd' : '#d1e7dd';
+    toast.style.color = type === 'warning' ? '#856404' : '#0f5132';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.justifyContent = 'space-between';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    
+    // Set icon based on type
+    const icon = type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center;">
+            <i class="fas ${icon}" style="margin-right: 10px;"></i>
+            <span>${message}</span>
+        </div>
+        <button style="background: none; border: none; cursor: pointer; margin-left: 15px;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Add close button functionality
+    toast.querySelector('button').addEventListener('click', () => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    });
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Show toast with animation
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
 }

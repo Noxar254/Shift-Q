@@ -1033,13 +1033,20 @@ function clockIn() {
             // Show detailed success message
             showToast(`Successfully clocked in!`, 'success');
             
+            // Get address from location
+            let locationAddress = 'Current location';
+            if (locationStatus && locationStatus.textContent && locationStatus.textContent !== 'Getting location...') {
+                locationAddress = locationStatus.textContent;
+            }
+            
             // Send real-time notification to admin portal
             if (adminPortalEventChannel) {
                 adminPortalEventChannel.sendEvent('clock-in', {
                     branch: branchSelect.options[branchSelect.selectedIndex].text,
                     role: roleSelect.options[roleSelect.selectedIndex].text,
                     timestamp: new Date().toISOString(),
-                    shiftId: data.shift_id || null
+                    shiftId: data.shift_id || null,
+                    location: locationAddress
                 });
             }
             

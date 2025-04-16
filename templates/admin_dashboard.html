@@ -1756,6 +1756,228 @@
             border: 2px solid white;
             animation: pulse 2s infinite;
         }
+
+        /* Shift Configuration Styling */
+        .weekday-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .weekday-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        
+        .weekday-checkbox {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .weekday-label span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+        
+        .weekday-checkbox:checked + span {
+            background-color: #4c6ef5;
+            color: white;
+            border-color: #4c6ef5;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(76, 110, 245, 0.3);
+        }
+        
+        .weekday-checkbox:focus + span {
+            box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.2);
+        }
+        
+        .shift-types-container {
+            margin-top: 30px;
+        }
+        
+        .shift-types-container h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .shift-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .shift-filter {
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            font-size: 0.95rem;
+            color: #495057;
+        }
+        
+        .search-box {
+            flex: 1;
+            position: relative;
+            max-width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 8px 15px 8px 35px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            font-size: 0.95rem;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+        }
+        
+        .shift-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #4c6ef5;
+            margin-bottom: 8px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .shift-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .shift-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .shift-info {
+            flex: 1;
+        }
+        
+        .shift-title {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #343a40;
+            margin-bottom: 5px;
+        }
+        
+        .shift-details {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .shift-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .shift-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .shift-action-btn {
+            padding: 5px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background-color: transparent;
+            transition: all 0.2s;
+            color: #6c757d;
+        }
+        
+        .shift-action-btn:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.1);
+        }
+        
+        .shift-action-btn.edit:hover {
+            color: #4c6ef5;
+        }
+        
+        .shift-action-btn.delete:hover {
+            color: #fa5252;
+        }
+        
+        .shift-action-btn.copy:hover {
+            color: #40c057;
+        }
+        
+        .shift-capacity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background-color: rgba(76, 110, 245, 0.1);
+            color: #4c6ef5;
+        }
+        
+        .weekday-pills {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+        
+        .weekday-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        /* Support for responsive design on the shift configuration */
+        @media (max-width: 768px) {
+            .shift-details {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .shift-actions {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1810,6 +2032,7 @@
                     <li data-tab="staff"><i class="fas fa-users"></i> Staff</li>
                     <li data-tab="shifts"><i class="fas fa-clock"></i> Shifts</li>
                     <li data-tab="leave"><i class="fas fa-calendar-alt"></i> Leave Requests</li>
+                    <li data-tab="work-hours"><i class="fas fa-business-time"></i> Work Hours</li>
                     <li data-tab="notifications"><i class="fas fa-bell"></i> Notifications <span class="notification-badge">3</span></li>
                     <li data-tab="settings"><i class="fas fa-cog"></i> Settings</li>
                 </ul>
@@ -2213,6 +2436,159 @@
                             <div class="settings-list" id="roles-list">
                                 <div class="loading">
                                     <i class="fas fa-spinner fa-spin"></i> Loading roles...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Work Hours Tab -->
+            <section id="work-hours-tab" class="tab-content">
+                <div class="card-header with-actions">
+                    <h2><i class="fas fa-business-time"></i> Work Hours Management</h2>
+                </div>
+                <div class="card-body">
+                    <div class="settings-container">
+                        <!-- Standard Work Hours Settings -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-clock"></i> Standard Work Hours</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="settings-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="standard-clock-in">Standard Clock In Time</label>
+                                            <input type="time" id="standard-clock-in">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="standard-clock-out">Standard Clock Out Time</label>
+                                            <input type="time" id="standard-clock-out">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="late-threshold">Late Arrival Threshold (minutes)</label>
+                                            <input type="number" id="late-threshold" min="1" max="60" value="15">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="early-departure-threshold">Early Departure Threshold (minutes)</label>
+                                            <input type="number" id="early-departure-threshold" min="1" max="60" value="15">
+                                        </div>
+                                    </div>
+                                    <button id="save-work-hours" class="btn-primary">
+                                        <i class="fas fa-save"></i> Save Work Hours Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Shift Configuration -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-layer-group"></i> Shift Configuration</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="settings-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="shift-name">Shift Name</label>
+                                            <input type="text" id="shift-name" placeholder="E.g., Morning Shift">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shift-color">Color</label>
+                                            <input type="color" id="shift-color" value="#4c6ef5">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="shift-start">Start Time</label>
+                                            <input type="time" id="shift-start">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shift-end">End Time</label>
+                                            <input type="time" id="shift-end">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="shift-branch">Branch</label>
+                                            <select id="shift-branch">
+                                                <option value="">All Branches</option>
+                                                <!-- Will be populated dynamically -->
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shift-capacity">Staff Capacity</label>
+                                            <input type="number" id="shift-capacity" min="1" value="1">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label>Repeat on Days</label>
+                                            <div class="weekday-selector">
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="mon">
+                                                    <span>Mon</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="tue">
+                                                    <span>Tue</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="wed">
+                                                    <span>Wed</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="thu">
+                                                    <span>Thu</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="fri">
+                                                    <span>Fri</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="sat">
+                                                    <span>Sat</span>
+                                                </label>
+                                                <label class="weekday-label">
+                                                    <input type="checkbox" class="weekday-checkbox" value="sun">
+                                                    <span>Sun</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label for="shift-notes">Notes</label>
+                                            <textarea id="shift-notes" rows="2" placeholder="Any additional information about this shift"></textarea>
+                                        </div>
+                                    </div>
+                                    <button id="add-shift" class="btn-primary">
+                                        <i class="fas fa-plus-circle"></i> Add Shift
+                                    </button>
+                                    <button id="reset-shift-form" class="btn-secondary">
+                                        <i class="fas fa-undo"></i> Reset Form
+                                    </button>
+                                </div>
+                                <div class="shift-types-container">
+                                    <h3><i class="fas fa-list"></i> Configured Shifts</h3>
+                                    <div class="shift-filters">
+                                        <select id="shift-filter-branch" class="shift-filter">
+                                            <option value="">All Branches</option>
+                                            <!-- Will be populated dynamically -->
+                                        </select>
+                                        <div class="search-box">
+                                            <input type="text" id="shift-search" placeholder="Search shifts...">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                    </div>
+                                    <div id="shifts-list" class="settings-list">
+                                        <div class="loading">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading shifts...
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
