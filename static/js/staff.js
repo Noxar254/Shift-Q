@@ -11,6 +11,9 @@ let checkStaffInterval = null;
 let allBranches = {};
 let allRoles = {};
 
+// Admin portal real-time communication
+let adminPortalEventChannel = null;
+
 // DOM Elements
 const clockBtn = document.getElementById('clock-btn');
 const leaveBtn = document.getElementById('leave-btn');
@@ -111,6 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for meetings every 5 minutes
     setInterval(checkForMeetings, 5 * 60 * 1000);
+
+    // Setup real-time communication with admin portal
+    setupAdminPortalCommunication();
 
     function initializeChat() {
         if (!chatBtn || !chatModal) return;
@@ -984,6 +990,16 @@ function clockIn() {
             // Show detailed success message
             showToast(`Successfully clocked in!`, 'success');
             
+            // Send real-time notification to admin portal
+            if (adminPortalEventChannel) {
+                adminPortalEventChannel.sendEvent('clock-in', {
+                    branch: branchSelect.options[branchSelect.selectedIndex].text,
+                    role: roleSelect.options[roleSelect.selectedIndex].text,
+                    timestamp: new Date().toISOString(),
+                    shiftId: data.shift_id || null
+                });
+            }
+            
             // Set a brief timeout to allow the toast to be seen before refreshing
             setTimeout(() => {
                 window.location.reload();
@@ -1027,6 +1043,15 @@ function clockOut() {
             
             // Show detailed success message
             showToast(`Successfully clocked out at ${clockOutTime}! Your shift has been recorded.`, 'success');
+            
+            // Send real-time notification to admin portal
+            if (adminPortalEventChannel) {
+                adminPortalEventChannel.sendEvent('clock-out', {
+                    timestamp: new Date().toISOString(),
+                    shiftId: currentShiftId,
+                    duration: data.duration || null
+                });
+            }
             
             // Set a brief timeout to allow the toast to be seen before refreshing
             setTimeout(() => {
@@ -1239,6 +1264,18 @@ function submitLeaveRequest() {
             const formattedStart = formatDisplayDate(startDate);
             const formattedEnd = formatDisplayDate(endDate);
             
+            // Send real-time notification to admin portal
+            if (adminPortalEventChannel) {
+                adminPortalEventChannel.sendEvent('leave-request', {
+                    startDate: startDate,
+                    endDate: endDate,
+                    formattedStart: formattedStart,
+                    formattedEnd: formattedEnd,
+                    reason: reason,
+                    requestId: data.request_id || `leave-${new Date().getTime()}`
+                });
+            }
+            
             // Show detailed success message
             showToast(`Leave request successfully submitted! Your request from ${formattedStart} to ${formattedEnd} awaits approval.`, 'success');
         } else {
@@ -1302,6 +1339,18 @@ function submitShiftChangeRequest() {
             myShiftSelect.value = '';
             document.getElementById('swap-with-staff').value = '';
             document.getElementById('swap-reason').value = '';
+            
+            // Send real-time notification to admin portal
+            if (adminPortalEventChannel) {
+                adminPortalEventChannel.sendEvent('shift-swap', {
+                    shiftId: selectedShift,
+                    shiftDetails: selectedShiftText,
+                    targetUsername: targetUsername,
+                    targetName: targetName,
+                    reason: reason,
+                    requestId: data.request_id || `swap-${new Date().getTime()}`
+                });
+            }
             
             // Show detailed success message
             showToast(`Shift change request submitted successfully! Your request to swap ${selectedShiftText} with ${targetName} awaits approval.`, 'success');
@@ -2260,4 +2309,44 @@ function isSameDay(date1, date2) {
     return date1.getDate() === date2.getDate() && 
            date1.getMonth() === date2.getMonth() && 
            date1.getFullYear() === date2.getFullYear();
+}
+
+// Setup real-time communication with admin portal
+function setupAdminPortalCommunication() {
+    // Check if browser supports localStorage for cross-tab communication
+    if (typeof Storage === 'undefined') {
+        console.error('LocalStorage not supported. Real-time communication disabled.');
+        return;
+    }
+    
+    // Initialize admin portal event channel
+    adminPortalEventChannel = {
+        sendEvent: function(eventType, eventData) {
+            // Create event object
+            const event = {
+                type: eventType,
+                data: eventData,
+                timestamp: new Date().toISOString(),
+                staffId: staffSelect ? staffSelect.value : null,
+                staffName: staffSelect && staffSelect.selectedIndex > 0 ? 
+                           staffSelect.options[staffSelect.selectedIndex].text : 'Unknown Staff'
+            };
+            
+            // Store in localStorage for admin portal to pick up
+            localStorage.setItem('adminPortalEvents', JSON.stringify([
+                ...JSON.parse(localStorage.getItem('adminPortalEvents') || '[]'),
+                event
+            ]));
+            
+            // Set last updated timestamp for admin portal to detect changes
+            localStorage.setItem('adminPortalEventsUpdated', new Date().toISOString());
+            
+            console.log(`Real-time event sent to admin portal: ${eventType}`);
+            
+            // Dispatch custom event for same-tab communication
+            window.dispatchEvent(new CustomEvent('admin-portal-event', { 
+                detail: event 
+            }));
+        }
+    };
 }

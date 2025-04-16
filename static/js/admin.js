@@ -186,6 +186,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize meetings feature
     initializeMeetings();
+
+    // Setup real-time event handling from staff portal
+    setupStaffEventListener();
 });
 
 // Set up tab navigation
@@ -285,7 +288,7 @@ function displayActiveStaff(shifts) {
         const clockInTime = formatDateTime(shift.clock_in_time);
         
         html += `
-            <tr>
+            <tr data-staff-id="${shift.id || ''}" data-staff-name="${shift.name || ''}">
                 <td>${shift.name}</td>
                 <td>${shift.branch}</td>
                 <td>${shift.role}</td>
@@ -298,7 +301,7 @@ function displayActiveStaff(shifts) {
     activeStaffTable.innerHTML = html;
 }
 
-// Display pending leave requests in dashboard
+// Display pending leave requests in dashboard with real-time updates
 function displayPendingLeaveRequests(leaveRequests) {
     // Filter to get only pending requests
     const pendingRequests = leaveRequests.filter(request => request.status === 'pending');
@@ -314,8 +317,11 @@ function displayPendingLeaveRequests(leaveRequests) {
     
     let html = '';
     pendingRequests.forEach(request => {
+        // Add a class for newly added requests if marked
+        const isNewRequest = request.isNew ? ' class="highlighted-new"' : '';
+        
         html += `
-            <tr>
+            <tr${isNewRequest}>
                 <td>${request.name}</td>
                 <td>${formatDate(new Date(request.start_date))}</td>
                 <td>${formatDate(new Date(request.end_date))}</td>
@@ -326,6 +332,11 @@ function displayPendingLeaveRequests(leaveRequests) {
                 </td>
             </tr>
         `;
+        
+        // Remove the 'isNew' flag after displaying
+        if (request.isNew) {
+            delete request.isNew;
+        }
     });
     
     leaveRequestsTable.innerHTML = html;
@@ -334,6 +345,9 @@ function displayPendingLeaveRequests(leaveRequests) {
     document.querySelectorAll('#leave-requests-table .btn-action').forEach(btn => {
         btn.addEventListener('click', handleLeaveAction);
     });
+    
+    // Ensure the real-time indicator is shown for this table
+    ensureRealTimeIndicator(leaveRequestsTable);
 }
 
 // Handle leave request approval/rejection
@@ -3694,4 +3708,851 @@ function showToast(message, duration = 3000) {
             toastContainer.removeChild(toast);
         }, 300); // Wait for fade out animation
     }, duration);
+}
+
+// Admin portal real-time communication
+let staffEventListener = null;
+let lastEventCheckTime = null;
+
+// Setup real-time event handling from staff portal
+function setupStaffEventListener() {
+    // Initialize empty array if it doesn't exist
+    if (!localStorage.getItem('adminPortalEvents')) {
+        localStorage.setItem('adminPortalEvents', '[]');
+    }
+    
+    // Store current time as last check time
+    lastEventCheckTime = new Date().toISOString();
+    
+    // Set up event listener for same-tab events
+    window.addEventListener('admin-portal-event', handleStaffEvent);
+    
+    // Start polling for events from localStorage (cross-tab communication)
+    staffEventListener = setInterval(checkForStaffEvents, 2000); // Check every 2 seconds
+    
+    console.log('Admin portal real-time event listener started');
+}
+
+// Check for new staff events in localStorage
+function checkForStaffEvents() {
+    const eventsUpdated = localStorage.getItem('adminPortalEventsUpdated');
+    
+    // If last updated timestamp exists and is newer than our last check
+    if (eventsUpdated && new Date(eventsUpdated) > new Date(lastEventCheckTime)) {
+        const events = JSON.parse(localStorage.getItem('adminPortalEvents') || '[]');
+        
+        // Filter only new events
+        const newEvents = events.filter(event => 
+            new Date(event.timestamp) > new Date(lastEventCheckTime)
+        );
+        
+        // Process each new event
+        newEvents.forEach(event => {
+            handleStaffEvent({ detail: event });
+        });
+        
+        // Update last check time
+        lastEventCheckTime = new Date().toISOString();
+    }
+}
+
+// Handle staff events
+function handleStaffEvent(e) {
+    const event = e.detail;
+    
+    console.log('Received staff event:', event.type, event);
+    
+    switch(event.type) {
+        case 'clock-in':
+            handleClockInEvent(event);
+            break;
+            
+        case 'clock-out':
+            handleClockOutEvent(event);
+            break;
+            
+        case 'leave-request':
+            handleLeaveRequestEvent(event);
+            break;
+            
+        case 'shift-swap':
+            handleShiftSwapEvent(event);
+            break;
+    }
+}
+
+// Real-time processing functions - consolidated
+function handleClockInEvent(event) {
+    // Show notification
+    showAdminNotification(
+        'New Clock In',
+        `${event.staffName} clocked in at ${formatDisplayTime(event.data.timestamp)}`,
+        'clock'
+    );
+    
+    // Add to activity feed
+    addToActivityFeed({
+        type: 'clock-in',
+        icon: 'fas fa-clock',
+        color: 'var(--highlight-green)',
+        title: 'Clock In',
+        message: `${event.staffName} clocked in at ${formatDisplayTime(event.data.timestamp)}`,
+        details: `Branch: ${event.data.branch}, Role: ${event.data.role}`,
+        timestamp: event.data.timestamp
+    });
+    
+    // Create a new active staff entry
+    const newActiveStaff = {
+        name: event.staffName,
+        branch: event.data.branch,
+        role: event.data.role,
+        clock_in_time: event.data.timestamp,
+        clock_out_time: null,
+        clock_in_location: { address: 'Current location' },
+        id: `shift-${Date.now()}`
+    };
+    
+    // Add to allShifts array to ensure it persists on page reload
+    if (Array.isArray(allShifts)) {
+        allShifts.push(newActiveStaff);
+    }
+    
+    // Force update the active staff display immediately
+    const activeShifts = Array.isArray(allShifts) ? 
+        allShifts.filter(shift => shift.clock_out_time === null) : [newActiveStaff];
+    
+    // Direct DOM update for active staff table
+    updateActiveStaffTable(activeShifts);
+    
+    // Update dashboard counts and stats
+    updateDashboardStats(allShifts);
+    
+    // Show real-time indicator
+    addRealTimeIndicator(activeStaffTable);
+}
+
+// Function to immediately update the active staff table with provided data
+function updateActiveStaffTable(activeShifts) {
+    if (!activeStaffTable) return;
+    
+    if (activeShifts.length === 0) {
+        activeStaffTable.innerHTML = `
+            <tr>
+                <td colspan="5" class="loading-cell">No active staff members at the moment.</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    activeShifts.forEach(shift => {
+        const isNew = shift.isNew ? ' class="new-active-staff"' : '';
+        const clockInTime = formatDateTime(shift.clock_in_time);
+        
+        html += `
+            <tr${isNew} data-staff-id="${shift.id || ''}" data-staff-name="${shift.name || ''}">
+                <td>${shift.name}</td>
+                <td>${shift.branch}</td>
+                <td>${shift.role}</td>
+                <td>${clockInTime}</td>
+                <td>${shift.clock_in_location ? shift.clock_in_location.address : 'Location data unavailable'}</td>
+            </tr>
+        `;
+    });
+    
+    activeStaffTable.innerHTML = html;
+    
+    // Add highlight animation to new entries
+    document.querySelectorAll('.new-active-staff').forEach(row => {
+        row.classList.add('highlight-animation');
+        
+        // Remove highlighting classes after animation completes
+        setTimeout(() => {
+            row.classList.remove('highlight-animation');
+            row.classList.remove('new-active-staff');
+        }, 3000);
+    });
+}
+
+// Single consolidated function for handling leave request events
+function handleLeaveRequestEvent(event) {
+    // Show notification
+    showAdminNotification(
+        'New Leave Request',
+        `${event.staffName} requested leave from ${event.data.formattedStart} to ${event.data.formattedEnd}`,
+        'calendar'
+    );
+    
+    // Add to activity feed
+    addToActivityFeed({
+        type: 'leave-request',
+        icon: 'fas fa-calendar-alt',
+        color: 'var(--highlight-blue)',
+        title: 'Leave Request',
+        message: `${event.staffName} requested leave from ${event.data.formattedStart} to ${event.data.formattedEnd}`,
+        details: `Reason: ${event.data.reason}`,
+        timestamp: event.timestamp,
+        actions: [
+            { label: 'Approve', action: 'approveLeave', data: { requestId: event.data.requestId } },
+            { label: 'Deny', action: 'denyLeave', data: { requestId: event.data.requestId } }
+        ]
+    });
+    
+    // Update pending approvals section
+    updatePendingApprovals();
+    
+    // Add directly to pending leave requests table for real-time display
+    addPendingLeaveRequestToTable({
+        id: event.data.requestId || `leave-${new Date().getTime()}`,
+        name: event.staffName,
+        start_date: event.data.startDate,
+        end_date: event.data.endDate, 
+        reason: event.data.reason,
+        status: 'pending'
+    });
+}
+
+// Single consolidated function for adding leave requests to table
+function addPendingLeaveRequestToTable(leaveRequest) {
+    if (!leaveRequestsTable) return;
+    
+    // Check if there's a placeholder "no pending requests" row
+    const noRequestsRow = leaveRequestsTable.querySelector('tr td.loading-cell');
+    if (noRequestsRow) {
+        leaveRequestsTable.innerHTML = ''; // Clear the placeholder
+    }
+    
+    // Format dates
+    const startDate = formatDate(new Date(leaveRequest.start_date));
+    const endDate = formatDate(new Date(leaveRequest.end_date));
+    
+    // Create a new row
+    const newRow = document.createElement('tr');
+    newRow.className = 'new-request highlight-animation';
+    newRow.dataset.id = leaveRequest.id;
+    newRow.innerHTML = `
+        <td>${leaveRequest.name}</td>
+        <td>${startDate}</td>
+        <td>${endDate}</td>
+        <td>${leaveRequest.reason}</td>
+        <td>
+            <button class="btn-action approve" data-id="${leaveRequest.id}">Approve</button>
+            <button class="btn-action reject" data-id="${leaveRequest.id}">Reject</button>
+        </td>
+    `;
+    
+    // Add the row to the table (at the top)
+    leaveRequestsTable.insertBefore(newRow, leaveRequestsTable.firstChild);
+    
+    // Add event listeners to buttons
+    newRow.querySelectorAll('.btn-action').forEach(btn => {
+        btn.addEventListener('click', handleLeaveAction);
+    });
+    
+    // Add highlight animation
+    setTimeout(() => {
+        newRow.classList.add('highlight-animation');
+        
+        // Remove highlight after animation completes
+        setTimeout(() => {
+            newRow.classList.remove('highlight-animation');
+            newRow.classList.remove('new-request');
+        }, 5000);
+    }, 100);
+    
+    // Add CSS for highlight if not already present
+    if (!document.getElementById('leave-request-highlight-style')) {
+        const style = document.createElement('style');
+        style.id = 'leave-request-highlight-style';
+        style.innerHTML = `
+            .new-request {
+                background-color: rgba(52, 152, 219, 0.2);
+            }
+            
+            .highlight-animation {
+                animation: fadeHighlight 5s ease-out;
+            }
+            
+            @keyframes fadeHighlight {
+                from { background-color: rgba(52, 152, 219, 0.2); }
+                to { background-color: transparent; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add real-time indicator
+    addRealTimeIndicator(leaveRequestsTable);
+    
+    // Update leave count in dashboard
+    const currentCount = parseInt(leaveCountElem.textContent || '0');
+    leaveCountElem.textContent = currentCount + 1;
+}
+
+// Handle clock-out events
+function handleClockOutEvent(event) {
+    // Show notification
+    showAdminNotification(
+        'New Clock Out',
+        `${event.staffName} clocked out at ${formatDisplayTime(event.data.timestamp)}`,
+        'clock'
+    );
+    
+    // Add to activity feed
+    addToActivityFeed({
+        type: 'clock-out',
+        icon: 'fas fa-stopwatch',
+        color: 'var(--highlight-orange)',
+        title: 'Clock Out',
+        message: `${event.staffName} clocked out at ${formatDisplayTime(event.data.timestamp)}`,
+        details: event.data.duration ? `Shift duration: ${formatDuration(event.data.duration)}` : '',
+        timestamp: event.data.timestamp
+    });
+    
+    // Update live dashboard counts
+    updateDashboardCounts();
+}
+
+// Handle shift swap events
+function handleShiftSwapEvent(event) {
+    // Show notification
+    showAdminNotification(
+        'New Shift Swap Request',
+        `${event.staffName} requested to swap shifts with ${event.data.targetName}`,
+        'exchange'
+    );
+    
+    // Add to activity feed
+    addToActivityFeed({
+        type: 'shift-swap',
+        icon: 'fas fa-exchange-alt',
+        color: 'var(--highlight-purple)',
+        title: 'Shift Swap Request',
+        message: `${event.staffName} requested to swap shifts with ${event.data.targetName}`,
+        details: `Shift: ${event.data.shiftDetails}<br>Reason: ${event.data.reason}`,
+        timestamp: event.timestamp,
+        actions: [
+            { label: 'Approve', action: 'approveSwap', data: { requestId: event.data.requestId } },
+            { label: 'Deny', action: 'denySwap', data: { requestId: event.data.requestId } }
+        ]
+    });
+    
+    // Update pending approvals section
+    updatePendingApprovals();
+}
+
+// Show admin notification
+function showAdminNotification(title, message, icon = 'info') {
+    // Select icon class
+    let iconClass = 'fas fa-info-circle';
+    switch(icon) {
+        case 'clock': iconClass = 'fas fa-clock'; break;
+        case 'calendar': iconClass = 'fas fa-calendar-alt'; break;
+        case 'exchange': iconClass = 'fas fa-exchange-alt'; break;
+        case 'alert': iconClass = 'fas fa-exclamation-circle'; break;
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'admin-notification';
+    notification.innerHTML = `
+        <div class="notification-icon">
+            <i class="${iconClass}"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+            <div class="notification-time">Just now</div>
+        </div>
+        <div class="notification-close">
+            <i class="fas fa-times"></i>
+        </div>
+    `;
+    
+    // Add close button functionality
+    notification.querySelector('.notification-close').addEventListener('click', function() {
+        notification.classList.add('notification-closing');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    });
+    
+    // Add notification to container
+    const container = document.getElementById('admin-notifications');
+    if (!container) {
+        // Create container if it doesn't exist
+        const notificationContainer = document.createElement('div');
+        notificationContainer.id = 'admin-notifications';
+        document.body.appendChild(notificationContainer);
+        notificationContainer.appendChild(notification);
+    } else {
+        container.appendChild(notification);
+    }
+    
+    // Add notification appearance animation
+    notification.style.animation = 'slideInRight 0.3s forwards';
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        notification.classList.add('notification-closing');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 10000);
+    
+    // Add CSS if not already present
+    if (!document.getElementById('admin-notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'admin-notification-styles';
+        style.innerHTML = `
+            #admin-notifications {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                max-width: 350px;
+            }
+            
+            .admin-notification {
+                background-color: white;
+                border-left: 4px solid #3498db;
+                border-radius: 6px;
+                box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+                padding: 15px;
+                display: flex;
+                align-items: flex-start;
+                transform: translateX(400px);
+            }
+            
+            @keyframes slideInRight {
+                from { transform: translateX(400px); }
+                to { transform: translateX(0); }
+            }
+            
+            .notification-closing {
+                animation: fadeOut 0.3s forwards;
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(400px); }
+            }
+            
+            .notification-icon {
+                margin-right: 12px;
+                font-size: 1.5rem;
+                color: #3498db;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .notification-content {
+                flex: 1;
+            }
+            
+            .notification-title {
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            
+            .notification-message {
+                font-size: 0.9rem;
+                color: #555;
+            }
+            
+                font-size: 0.9rem;
+            }
+            
+            .notification-close:hover {
+                color: #555;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Play notification sound
+    playNotificationSound();
+}
+
+// Play notification sound
+function playNotificationSound() {
+    // Check if notifications are muted
+    const notificationsMuted = localStorage.getItem('adminNotificationsMuted') === 'true';
+    if (notificationsMuted) return;
+    
+    // Play sound
+    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(err => console.log('Could not play notification sound:', err));
+}
+
+// Format timestamp for display
+function formatDisplayTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+}
+
+// Format duration (seconds) to display format (e.g. "2h 30m")
+function formatDuration(seconds) {
+    if (!seconds) return 'N/A';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+}
+
+// Add event to the activity feed
+function addToActivityFeed(activity) {
+    const activityFeed = document.getElementById('activity-feed');
+    if (!activityFeed) return;
+    
+    // Create activity item element
+    const activityItem = document.createElement('div');
+    activityItem.className = 'activity-item';
+    activityItem.dataset.timestamp = activity.timestamp;
+    activityItem.dataset.type = activity.type;
+    
+    // Format the timestamp
+    const timestamp = new Date(activity.timestamp);
+    const timeString = timestamp.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    const dateString = timestamp.toLocaleDateString('en-US', {day: 'numeric', month: 'short'});
+    
+    // Create action buttons if provided
+    let actionsHTML = '';
+    if (activity.actions && activity.actions.length > 0) {
+        actionsHTML = '<div class="activity-actions">';
+        activity.actions.forEach(action => {
+            actionsHTML += `<button class="activity-action" data-action="${action.action}" data-json='${JSON.stringify(action.data)}'>${action.label}</button>`;
+        });
+        actionsHTML += '</div>';
+    }
+    
+    // Construct the activity item
+    activityItem.innerHTML = `
+        <div class="activity-icon" style="background-color: ${activity.color || 'var(--highlight-gray)'}">
+            <i class="${activity.icon || 'fas fa-bell'}"></i>
+        </div>
+        <div class="activity-content">
+            <div class="activity-title">
+                <span class="activity-type">${activity.title}</span>
+                <span class="activity-time">${timeString} · ${dateString}</span>
+            </div>
+            <div class="activity-message">${activity.message}</div>
+            ${activity.details ? `<div class="activity-details">${activity.details}</div>` : ''}
+            ${actionsHTML}
+        </div>
+    `;
+    
+    // Add event listeners to action buttons
+    if (activity.actions) {
+        activityItem.querySelectorAll('.activity-action').forEach(button => {
+            button.addEventListener('click', function() {
+                const actionType = this.getAttribute('data-action');
+                const actionData = JSON.parse(this.getAttribute('data-json'));
+                handleActivityAction(actionType, actionData, activityItem);
+            });
+        });
+    }
+    
+    // Add to the beginning of the feed
+    activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+    
+    // Limit the number of activities shown
+    const maxActivities = 50;
+    while (activityFeed.children.length > maxActivities) {
+        activityFeed.removeChild(activityFeed.lastChild);
+    }
+    
+    // Show "new" indicator
+    activityItem.classList.add('new-activity');
+    setTimeout(() => {
+        activityItem.classList.remove('new-activity');
+    }, 5000);
+}
+
+// Handle activity actions (approve/deny buttons)
+function handleActivityAction(actionType, data, activityItem) {
+    console.log('Action triggered:', actionType, data);
+    
+    switch(actionType) {
+        case 'approveLeave':
+            approveLeaveRequest(data.requestId, activityItem);
+            break;
+            
+        case 'denyLeave':
+            denyLeaveRequest(data.requestId, activityItem);
+            break;
+            
+        case 'approveSwap':
+            approveShiftSwap(data.requestId, activityItem);
+            break;
+            
+        case 'denySwap':
+            denyShiftSwap(data.requestId, activityItem);
+            break;
+    }
+}
+
+// Update pending approvals section
+function updatePendingApprovals() {
+    // Refresh leave requests
+    fetch('/get_leave_requests')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                allLeaveRequests = data.leave_requests;
+                displayPendingLeaveRequests(allLeaveRequests);
+                updateLeaveStats(allLeaveRequests);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    
+    // Refresh shift change requests
+    fetch('/get_shift_change_requests')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                allShiftChangeRequests = data.requests;
+                const shiftSwapRequestsTable = document.getElementById('shift-swap-requests-table');
+                if (shiftSwapRequestsTable) {
+                    displayShiftChangeRequests(allShiftChangeRequests);
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Update dashboard counts
+function updateDashboardCounts() {
+    // Refresh shifts data
+    fetch('/get_shifts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                allShifts = data.shifts;
+                updateDashboardStats(allShifts);
+                
+                // Immediately update active staff display for real-time updates
+                displayActiveStaff(allShifts);
+                
+                // Update shift table if on shifts tab
+                const activeTab = document.querySelector('.admin-sidebar nav ul li.active');
+                if (activeTab && activeTab.getAttribute('data-tab') === 'shifts') {
+                    displayShifts(allShifts);
+                }
+                
+                // Notify admin about staff activity changes
+                const activeStaffCount = allShifts.filter(shift => shift.clock_out_time === null).length;
+                
+                // Add staff activity status update to the activity feed
+                addToActivityFeed({
+                    type: 'staff-update',
+                    icon: 'fas fa-users',
+                    color: 'var(--highlight-blue)',
+                    title: 'Staff Activity Update',
+                    message: `Currently ${activeStaffCount} staff member${activeStaffCount !== 1 ? 's' : ''} active.`,
+                    details: 'Real-time staff activity update.',
+                    timestamp: new Date().toISOString()
+                });
+            }
+        })
+        .catch(error => console.error('Error updating dashboard counts:', error));
+}
+
+// Add new active staff member directly to the active staff table
+function addActiveStaffMember(staff) {
+    const activeStaffTable = document.getElementById('active-staff-table');
+    if (!activeStaffTable) return;
+    
+    const clockInTime = formatDateTime(staff.clock_in_time);
+    
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>${staff.name}</td>
+        <td>${staff.branch}</td>
+        <td>${staff.role}</td>
+        <td>${clockInTime}</td>
+        <td>${staff.clock_in_location.address}</td>
+    `;
+    
+    activeStaffTable.querySelector('tbody').appendChild(newRow);
+}
+
+// Add an active staff member directly to the active staff table (for real-time updates)
+function addActiveStaffMember(staffData) {
+    if (!activeStaffTable) return;
+    
+    // Check if there's a placeholder "no active staff" message
+    const noStaffRow = activeStaffTable.querySelector('.loading-cell');
+    if (noStaffRow) {
+        activeStaffTable.innerHTML = ''; // Clear the "no staff" message
+    }
+    
+    // Format clock-in time
+    const clockInTime = formatDateTime(staffData.clock_in_time);
+    
+    // Create a new row
+    const newRow = document.createElement('tr');
+    newRow.dataset.staffId = staffData.id || '';
+    newRow.dataset.staffName = staffData.name || '';
+    newRow.className = 'highlighted-new'; // Add highlight class
+    
+    newRow.innerHTML = `
+        <td>${staffData.name}</td>
+        <td>${staffData.branch}</td>
+        <td>${staffData.role}</td>
+        <td>${clockInTime}</td>
+        <td>${staffData.clock_in_location.address}</td>
+    `;
+    
+    // Add the new row at the top of the table
+    if (activeStaffTable.rows.length > 0) {
+        activeStaffTable.insertBefore(newRow, activeStaffTable.rows[0]);
+    } else {
+        activeStaffTable.appendChild(newRow);
+    }
+    
+    // Remove highlight after animation completes
+    setTimeout(() => {
+        newRow.classList.remove('highlighted-new');
+    }, 5000);
+    
+    // Make sure the real-time indicator is present
+    ensureRealTimeIndicator(activeStaffTable);
+}
+
+// Ensure real-time indicator is present for a table
+function ensureRealTimeIndicator(table) {
+    if (!table) return;
+    
+    // Find the containing section
+    const section = table.closest('.dashboard-section');
+    if (!section) return;
+    
+    // Check if indicator already exists
+    if (section.querySelector('.real-time-indicator')) return;
+    
+    // Find the section header
+    const header = section.querySelector('.section-header');
+    if (!header) return;
+    
+    // Create and add the indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'real-time-indicator';
+    indicator.innerHTML = '<span class="indicator-dot"></span> Live';
+    header.appendChild(indicator);
+    
+    // Add animation CSS if it doesn't exist
+    if (!document.getElementById('real-time-indicator-styles')) {
+        const style = document.createElement('style');
+        style.id = 'real-time-indicator-styles';
+        style.innerHTML = `
+            .real-time-indicator {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 10px;
+                font-size: 0.8rem;
+                color: #2ecc71;
+                font-weight: 500;
+            }
+            
+            .indicator-dot {
+                width: 8px;
+                height: 8px;
+                background-color: #2ecc71;
+                border-radius: 50%;
+                margin-right: 5px;
+                animation: pulse-indicator 2s infinite;
+            }
+            
+            @keyframes pulse-indicator {
+                0% { opacity: 1; }
+                50% { opacity: 0.3; }
+                100% { opacity: 1; }
+            }
+            
+            .highlighted-new {
+                animation: highlight-row 5s;
+            }
+            
+            @keyframes highlight-row {
+                0% { background-color: rgba(46, 204, 113, 0.2); }
+                100% { background-color: transparent; }
+            }
+            
+            tr.highlighted-new td {
+                transition: background-color 5s;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Add real-time indicator to a table
+function addRealTimeIndicator(table) {
+    // Skip if no table
+    if (!table) return;
+    
+    // Find parent dashboard section
+    const section = table.closest('.dashboard-section');
+    if (!section) return;
+    
+    // Skip if real-time indicator already exists
+    if (section.querySelector('.real-time-indicator')) return;
+    
+    // Find the section header
+    const header = section.querySelector('.section-header');
+    if (!header) return;
+    
+    // Create the real-time indicator
+    const indicatorWrapper = document.createElement('div');
+    indicatorWrapper.className = 'real-time-indicator';
+    indicatorWrapper.innerHTML = '<span class="pulse-dot"></span> Live';
+    
+    // Add the indicator to the section header
+    header.appendChild(indicatorWrapper);
+    
+    // Add CSS for the real-time indicator if needed
+    if (!document.getElementById('real-time-indicator-css')) {
+        const css = document.createElement('style');
+        css.id = 'real-time-indicator-css';
+        css.textContent = `
+            .real-time-indicator {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 10px;
+                padding: 3px 8px;
+                background-color: rgba(46, 204, 113, 0.1);
+                border-radius: 12px;
+                font-size: 0.8rem;
+                color: #2ecc71;
+                font-weight: 500;
+            }
+            
+            .pulse-dot {
+                width: 8px;
+                height: 8px;
+                background-color: #2ecc71;
+                border-radius: 50%;
+                margin-right: 5px;
+                animation: pulse-animation 2s infinite;
+            }
+            
+            @keyframes pulse-animation {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.85); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(css);
+    }
 }

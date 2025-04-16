@@ -325,11 +325,49 @@
         "branch": "Headquarters",
         "role": "Manager",
         "clock_in_time": "2025-04-16 10:57:31",
-        "clock_out_time": null,
+        "clock_out_time": "2025-04-16 11:17:45",
         "clock_in_location": {
             "latitude": -1.2746752,
             "longitude": 36.814848,
             "address": "Nairobi Snake Park, Peace Path, Ngara West sublocation, Ngara location, CBD division, Starehe, Nairobi, 46464, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.2652274,
+            "longitude": 36.8051168,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        }
+    },
+    {
+        "id": "c0923604-cf4c-474f-af2b-58faaeeb396b",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Headquarters",
+        "role": "Supervisor",
+        "clock_in_time": "2025-04-16 11:17:59",
+        "clock_out_time": "2025-04-16 11:32:48",
+        "clock_in_location": {
+            "latitude": -1.2652274,
+            "longitude": 36.8051168,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        },
+        "clock_out_location": {
+            "latitude": -1.2652299,
+            "longitude": 36.805104,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
+        }
+    },
+    {
+        "id": "8fb0fe12-01e0-4fac-9c07-efdc9d33b8c7",
+        "username": "john",
+        "name": "John Doe",
+        "branch": "Headquarters",
+        "role": "Manager",
+        "clock_in_time": "2025-04-16 12:25:19",
+        "clock_out_time": null,
+        "clock_in_location": {
+            "latitude": -1.2652119,
+            "longitude": 36.8050917,
+            "address": "Madonna House, 3, Westlands Road, Highridge sublocation, Highridge location, Highridge division, Westlands, Nairobi, 97104, Kenya"
         },
         "clock_out_location": null
     }
