@@ -1,0 +1,33 @@
+{
+  "name": "timetracker-pro",
+  "version": "1.0.0",
+  "description": "A modern staff clock in/out system with Firebase integration",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -c-1 -p 8080",
+    "dev": "http-server -c-1 -p 8080 -o",
+    "build": "echo 'No build process needed for this static site'",
+    "deploy": "firebase deploy"
+  },
+  "keywords": [
+    "time-tracking",
+    "employee-management",
+    "clock-in",
+    "clock-out",
+    "firebase",
+    "webapp"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/timetracker-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/timetracker-pro/issues"
+  },
+  "homepage": "https://github.com/yourusername/timetracker-pro#readme"
+}

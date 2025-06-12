@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - TimeTracker Pro</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .setup-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .setup-step {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .btn-setup {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        .btn-setup:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="setup-container">
+            <header style="text-align: center; margin-bottom: 40px;">
+                <i class="fas fa-cog" style="font-size: 3rem; color: #667eea; margin-bottom: 20px;"></i>
+                <h1 style="color: #333; margin-bottom: 10px;">TimeTracker Pro Setup</h1>
+                <p style="color: #666; font-size: 1.1rem;">Get your time tracking system ready in minutes</p>
+            </header>
+
+            <div class="setup-step">
+                <h3><i class="fas fa-fire"></i> Step 1: Firebase Configuration</h3>
+                <p>1. Go to <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></p>
+                <p>2. Create a new project or select existing one</p>
+                <p>3. Enable Firestore Database</p>
+                <p>4. Copy your configuration and replace the placeholder in <code>index.html</code>:</p>
+                <div class="code-block">
+const firebaseConfig = {<br>
+&nbsp;&nbsp;apiKey: "your-api-key",<br>
+&nbsp;&nbsp;authDomain: "your-project.firebaseapp.com",<br>
+&nbsp;&nbsp;projectId: "your-project-id",<br>
+&nbsp;&nbsp;storageBucket: "your-project.appspot.com",<br>
+&nbsp;&nbsp;messagingSenderId: "123456789",<br>
+&nbsp;&nbsp;appId: "your-app-id"<br>
+};
+                </div>
+            </div>
+
+            <div class="setup-step">
+                <h3><i class="fas fa-shield-alt"></i> Step 2: Firestore Security Rules</h3>
+                <p>Set up basic security rules in Firestore (found in firestore.rules file):</p>
+                <div class="code-block">
+rules_version = '2';<br>
+service cloud.firestore {<br>
+&nbsp;&nbsp;match /databases/{database}/documents {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;match /timeRecords/{document} {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}
+                </div>
+                <p><strong>Note:</strong> For production, implement proper authentication and stricter rules.</p>
+            </div>
+
+            <div class="setup-step">
+                <h3><i class="fas fa-users"></i> Step 3: Customize Staff Names</h3>
+                <p>Edit the staff dropdown in <code>index.html</code> to match your team:</p>
+                <div class="code-block">
+&lt;option value="Your Name"&gt;Your Name&lt;/option&gt;
+                </div>
+            </div>
+
+            <div class="setup-step">
+                <h3><i class="fas fa-server"></i> Step 4: Local Development</h3>
+                <p>For local testing, use a simple HTTP server:</p>
+                <div class="code-block">
+# Using Python<br>
+python -m http.server 8000<br><br>
+# Using Node.js<br>
+npx http-server<br><br>
+# Using PHP<br>
+php -S localhost:8000
+                </div>
+            </div>
+
+            <div class="setup-step">
+                <h3><i class="fas fa-rocket"></i> Step 5: Deploy (Optional)</h3>
+                <p>Deploy to Firebase Hosting:</p>
+                <div class="code-block">
+npm install -g firebase-tools<br>
+firebase login<br>
+firebase init hosting<br>
+firebase deploy
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="index.html" class="btn-setup">
+                    <i class="fas fa-play"></i> Launch TimeTracker Pro
+                </a>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: rgba(76, 175, 80, 0.1); border-radius: 15px; border-left: 4px solid #4CAF50;">
+                <h4><i class="fas fa-lightbulb"></i> Pro Tips:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>The app works offline and will sync when connection is restored</li>
+                    <li>Location tracking requires HTTPS in production</li>
+                    <li>Consider adding user authentication for production use</li>
+                    <li>Monitor your Firebase usage to avoid unexpected costs</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Q - Smart Workforce Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="shift-q">Q</span>
+                    <div class="logo-pulse"></div>
+                </div>
+                <div class="logo-text">
+                    <h1>Shift <span class="q-highlight">Q</span></h1>
+                    <p class="tagline">Smart Workforce</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="location-status" id="locationStatus">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Location tracking enabled</span>
+                </div>
+                <div class="current-time" id="currentTime"></div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="clock-card">                <div class="card-header">
+                    <h2>Workforce Management</h2>
+                    <p>Select your profile and manage your shift</p>
+                </div><div class="staff-selection">
+                    <label for="staffSelect">Select Staff Member:</label>                    <select id="staffSelect" class="staff-dropdown">
+                        <option value="">Choose your name...</option>
+                        <option value="Terry Maina">Terry Maina</option>
+                        <option value="Humphrey Abwao">Humphrey Abwao</option>
+                    </select>
+                    <div class="location-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Your location will be recorded for attendance verification</span>
+                    </div>
+                </div>                <div class="clock-buttons">
+                    <button id="clockInBtn" class="btn btn-clock-in" disabled>
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Clock In</span>
+                        <div class="btn-ripple"></div>
+                    </button>
+                    <button id="clockOutBtn" class="btn btn-clock-out" disabled>
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Clock Out</span>
+                        <div class="btn-ripple"></div>
+                    </button>
+                    <button id="leaveRequestBtn" class="btn btn-leave-request" disabled>
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Leave Request</span>
+                        <div class="btn-ripple"></div>
+                    </button>
+                </div>
+
+                <div class="status-display" id="statusDisplay">
+                    <div class="status-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="status-text">
+                        <p>Please select a staff member to continue</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div class="activity-list" id="activityList">
+                    <div class="no-activity">
+                        <i class="fas fa-history"></i>
+                        <p>No recent activity</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Success/Error Messages -->
+        <div class="toast-container" id="toastContainer"></div>        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+        </div>
+
+        <!-- Leave Request Modal -->
+        <div class="modal-overlay" id="leaveModalOverlay">
+            <div class="modal">                <div class="modal-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Leave Request</h3>
+                    <button class="modal-close" id="closeLeaveModal" title="Close modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="leaveRequestForm">
+                        <div class="form-group">
+                            <label for="leaveType">Leave Type:</label>
+                            <select id="leaveType" class="form-input" required>
+                                <option value="">Select leave type...</option>
+                                <option value="Annual Leave">Annual Leave</option>
+                                <option value="Sick Leave">Sick Leave</option>
+                                <option value="Personal Leave">Personal Leave</option>
+                                <option value="Emergency Leave">Emergency Leave</option>
+                                <option value="Maternity/Paternity Leave">Maternity/Paternity Leave</option>
+                                <option value="Study Leave">Study Leave</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="startDate">Start Date:</label>
+                            <input type="date" id="startDate" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date:</label>
+                            <input type="date" id="endDate" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="leaveReason">Reason:</label>
+                            <textarea id="leaveReason" class="form-input" rows="4" placeholder="Please provide details for your leave request..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="urgentRequest">
+                                <span class="checkmark"></span>
+                                Mark as urgent
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelLeaveRequest">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitLeaveRequest">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div><!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            orderBy, 
+            limit, 
+            onSnapshot,
+            serverTimestamp,
+            where,
+            getDocs
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            // Replace with your Firebase config
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make Firebase available globally
+        window.db = db;
+        window.firebaseUtils = {
+            collection,
+            addDoc,
+            query,
+            orderBy,
+            limit,
+            onSnapshot,
+            serverTimestamp,
+            where,
+            getDocs
+        };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
