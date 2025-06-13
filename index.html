@@ -79,6 +79,27 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Task Management Section -->
+            <div class="task-management">
+                <div class="task-header">
+                    <h3><i class="fas fa-tasks"></i> Quick Tasks</h3>
+                    <button id="clearAllTasksBtn" class="btn-clear-all" title="Clear all tasks">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="task-input-container">
+                    <input type="text" id="taskInput" class="task-input" placeholder="Add a quick task..." maxlength="100">                    <button id="addTaskBtn" class="btn-add-task" title="Add task">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="task-list" id="taskList">
+                    <div class="no-tasks">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>No tasks yet. Add one above!</p>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <!-- Success/Error Messages -->

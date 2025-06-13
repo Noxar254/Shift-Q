@@ -75,10 +75,14 @@ function updateCurrentTime() {
 // Handle staff selection
 async function handleStaffSelection() {
     const selectedStaff = staffSelect.value;
-    
-    if (!selectedStaff) {        currentStaff = null;
+      if (!selectedStaff) {        currentStaff = null;
         updateButtonStates(false, false, false);
         updateStatusDisplay('info', 'Please select a staff member to continue');
+        
+        // Update task management state
+        if (window.taskManager) {
+            window.taskManager.updateTaskInputState();
+        }
         return;
     }
     
@@ -98,6 +102,11 @@ async function handleStaffSelection() {
         }
         
         showToast('success', 'Staff Selected', `Welcome, ${selectedStaff}!`);
+        
+        // Update task management state
+        if (window.taskManager) {
+            window.taskManager.updateTaskInputState();
+        }
         
     } catch (error) {
         console.error('Error checking staff status:', error);
@@ -709,3 +718,347 @@ window.TimeTracker = {
     showToast,
     showLoading
 };
+
+// Task Management System
+class TaskManager {
+    constructor() {
+        this.tasks = [];
+        this.taskCounter = 0;
+        this.cleanupInterval = null;
+        this.audioContext = null;
+        this.initializeElements();
+        this.initializeEventListeners();
+        this.initializeAudio();
+        this.loadTasksFromStorage();
+        this.startAutoCleanup();
+    }
+
+    initializeElements() {
+        this.taskInput = document.getElementById('taskInput');
+        this.addTaskBtn = document.getElementById('addTaskBtn');
+        this.clearAllTasksBtn = document.getElementById('clearAllTasksBtn');
+        this.taskList = document.getElementById('taskList');
+    }    initializeEventListeners() {
+        this.addTaskBtn.addEventListener('click', () => this.addTask());
+        this.clearAllTasksBtn.addEventListener('click', () => this.clearAllTasks());
+        this.taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.addTask();
+            }
+        });
+        this.taskInput.addEventListener('input', () => this.updateAddButton());
+          // Initialize with disabled state
+        this.updateTaskInputState();
+    }
+
+    initializeAudio() {
+        // Initialize Web Audio API for notification sounds
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+            console.warn('Web Audio API not supported:', error);
+            this.audioContext = null;
+        }
+    }
+
+    playNotificationSound() {
+        if (!this.audioContext) return;
+
+        try {
+            // Resume audio context if suspended (required by browsers)
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+
+            // Create a pleasant notification sound using oscillators
+            const now = this.audioContext.currentTime;
+            
+            // First tone (higher pitch)
+            const oscillator1 = this.audioContext.createOscillator();
+            const gainNode1 = this.audioContext.createGain();
+            
+            oscillator1.connect(gainNode1);
+            gainNode1.connect(this.audioContext.destination);
+            
+            oscillator1.type = 'sine';
+            oscillator1.frequency.setValueAtTime(800, now);
+            oscillator1.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            
+            gainNode1.gain.setValueAtTime(0.3, now);
+            gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            
+            oscillator1.start(now);
+            oscillator1.stop(now + 0.2);
+            
+            // Second tone (lower pitch, slightly delayed)
+            setTimeout(() => {
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode2 = this.audioContext.createGain();
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(this.audioContext.destination);
+                
+                oscillator2.type = 'sine';
+                oscillator2.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                oscillator2.frequency.exponentialRampToValueAtTime(450, this.audioContext.currentTime + 0.15);
+                
+                gainNode2.gain.setValueAtTime(0.25, this.audioContext.currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
+                
+                oscillator2.start();
+                oscillator2.stop(this.audioContext.currentTime + 0.25);
+            }, 80);
+              } catch (error) {
+            console.warn('Failed to play notification sound:', error);
+        }
+    }
+
+    addButtonPulse() {
+        // Add a visual pulse effect to the add button
+        this.addTaskBtn.style.animation = 'none';
+        setTimeout(() => {
+            this.addTaskBtn.style.animation = 'buttonPulse 0.6s ease-out';
+        }, 10);
+        
+        // Remove animation after it completes
+        setTimeout(() => {
+            this.addTaskBtn.style.animation = 'none';
+        }, 600);
+    }updateAddButton() {
+        const hasContent = this.taskInput.value.trim().length > 0;
+        const hasStaff = currentStaff !== null;
+        const isEnabled = hasContent && hasStaff;
+        
+        this.addTaskBtn.style.opacity = isEnabled ? '1' : '0.4';
+        this.addTaskBtn.style.transform = isEnabled ? 'scale(1)' : 'scale(0.95)';
+        this.addTaskBtn.disabled = !isEnabled;
+    }
+
+    updateTaskInputState() {
+        const hasStaff = currentStaff !== null;
+        
+        if (hasStaff) {
+            this.taskInput.disabled = false;
+            this.taskInput.placeholder = 'Add a quick task...';
+            this.addTaskBtn.disabled = false;
+            this.clearAllTasksBtn.disabled = false;
+            this.taskInput.style.opacity = '1';
+            this.addTaskBtn.style.opacity = '0.4'; // Will be updated by updateAddButton
+            this.clearAllTasksBtn.style.opacity = '1';
+        } else {
+            this.taskInput.disabled = true;
+            this.taskInput.placeholder = 'Select a staff member first to add tasks...';
+            this.addTaskBtn.disabled = true;
+            this.clearAllTasksBtn.disabled = true;
+            this.taskInput.style.opacity = '0.5';
+            this.addTaskBtn.style.opacity = '0.3';
+            this.clearAllTasksBtn.style.opacity = '0.3';
+        }
+        
+        this.updateAddButton();
+    }    addTask() {
+        // Check if staff member is selected
+        if (!currentStaff) {
+            showToast('warning', 'Staff Required', 'Please select a staff member first to add tasks');
+            return;
+        }
+
+        const taskText = this.taskInput.value.trim();
+        if (!taskText) return;
+
+        const task = {
+            id: ++this.taskCounter,
+            text: taskText,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 hours from now
+            staffMember: currentStaff // Associate task with current staff member
+        };        this.tasks.unshift(task); // Add to beginning of array
+        this.taskInput.value = '';
+        this.updateAddButton();
+        this.renderTasks();
+        this.saveTasksToStorage();
+          // Play notification sound
+        this.playNotificationSound();
+        
+        // Add visual feedback to the add button
+        this.addButtonPulse();
+        
+        // Show success toast
+        showToast('success', 'Task Added', `"${taskText.substring(0, 30)}${taskText.length > 30 ? '...' : ''}" added successfully`);
+    }
+
+    deleteTask(taskId) {
+        const taskIndex = this.tasks.findIndex(task => task.id === taskId);
+        if (taskIndex > -1) {
+            const deletedTask = this.tasks.splice(taskIndex, 1)[0];
+            this.renderTasks();
+            this.saveTasksToStorage();
+            showToast('info', 'Task Deleted', `"${deletedTask.text.substring(0, 30)}${deletedTask.text.length > 30 ? '...' : ''}" was removed`);
+        }
+    }    clearAllTasks() {
+        // Check if staff member is selected
+        if (!currentStaff) {
+            showToast('warning', 'Staff Required', 'Please select a staff member first');
+            return;
+        }
+
+        if (this.tasks.length === 0) {
+            showToast('info', 'No Tasks', 'There are no tasks to clear');
+            return;
+        }
+
+        const taskCount = this.tasks.length;
+        this.tasks = [];
+        this.renderTasks();
+        this.saveTasksToStorage();
+        showToast('success', 'Tasks Cleared', `${taskCount} task${taskCount === 1 ? '' : 's'} cleared successfully`);
+    }    renderTasks() {
+        if (this.tasks.length === 0) {
+            const message = currentStaff 
+                ? `No tasks yet. Add one above!`
+                : `Select a staff member first to view and add tasks.`;
+            
+            this.taskList.innerHTML = `
+                <div class="no-tasks">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+            return;
+        }
+
+        const now = new Date();
+        this.taskList.innerHTML = this.tasks.map(task => {
+            const isExpired = now > task.expiresAt;
+            const timeLeft = this.getTimeRemaining(task.expiresAt);
+            
+            return `
+                <div class="task-item ${isExpired ? 'task-expired' : ''}" data-task-id="${task.id}">
+                    <div class="task-content">
+                        <div>${task.text}</div>
+                        <div class="task-time">
+                            ${isExpired ? 'Expired' : timeLeft} • ${this.formatDate(task.createdAt)}
+                            ${task.staffMember ? ` • ${task.staffMember}` : ''}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-delete-task" onclick="taskManager.deleteTask(${task.id})" title="Delete task">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getTimeRemaining(expiresAt) {
+        const now = new Date();
+        const diff = expiresAt - now;
+        
+        if (diff <= 0) return 'Expired';
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m left`;
+        } else {
+            return `${minutes}m left`;
+        }
+    }
+
+    formatDate(date) {
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        
+        return date.toLocaleDateString();
+    }
+
+    cleanupExpiredTasks() {
+        const now = new Date();
+        const initialCount = this.tasks.length;
+        this.tasks = this.tasks.filter(task => now <= task.expiresAt);
+        
+        if (this.tasks.length < initialCount) {
+            const removedCount = initialCount - this.tasks.length;
+            this.renderTasks();
+            this.saveTasksToStorage();
+            if (removedCount > 0) {
+                showToast('info', 'Auto Cleanup', `${removedCount} expired task${removedCount === 1 ? '' : 's'} automatically removed`);
+            }
+        }
+    }
+
+    startAutoCleanup() {
+        // Clean up expired tasks every 5 minutes
+        this.cleanupInterval = setInterval(() => {
+            this.cleanupExpiredTasks();
+        }, 5 * 60 * 1000);
+        
+        // Also update the display every minute to show updated time remaining
+        setInterval(() => {
+            if (this.tasks.length > 0) {
+                this.renderTasks();
+            }
+        }, 60 * 1000);
+    }
+
+    saveTasksToStorage() {
+        try {
+            const tasksData = {
+                tasks: this.tasks,
+                counter: this.taskCounter
+            };
+            localStorage.setItem('shiftq_tasks', JSON.stringify(tasksData));
+        } catch (error) {
+            console.warn('Failed to save tasks to storage:', error);
+        }
+    }
+
+    loadTasksFromStorage() {
+        try {
+            const savedData = localStorage.getItem('shiftq_tasks');
+            if (savedData) {
+                const tasksData = JSON.parse(savedData);
+                this.tasks = tasksData.tasks.map(task => ({
+                    ...task,
+                    createdAt: new Date(task.createdAt),
+                    expiresAt: new Date(task.expiresAt)
+                }));
+                this.taskCounter = tasksData.counter || 0;
+                
+                // Clean up any expired tasks on load
+                this.cleanupExpiredTasks();
+                this.renderTasks();
+            }
+        } catch (error) {
+            console.warn('Failed to load tasks from storage:', error);
+            this.tasks = [];
+            this.taskCounter = 0;
+        }
+    }
+}
+
+// Initialize task manager when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure all other elements are initialized first
+    setTimeout(() => {
+        window.taskManager = new TaskManager();
+    }, 100);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+    }
+    if (window.taskManager && window.taskManager.cleanupInterval) {
+        clearInterval(window.taskManager.cleanupInterval);
+    }
+});
