@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Shift Q - Smart Workforce Management</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- PWA and mobile optimization meta tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Shift Q">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
 </head>
 <body>
     <div class="container">        <header class="header">
@@ -18,8 +26,13 @@
                     <h1>Shift <span class="q-highlight">Q</span></h1>
                     <p class="tagline">Smart Workforce</p>
                 </div>
-            </div>
-            <div class="header-info">
+            </div>            <div class="header-info">
+                <div class="theme-toggle-container">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <i class="fas fa-sun theme-icon-light"></i>
+                        <i class="fas fa-moon theme-icon-dark"></i>
+                    </button>
+                </div>
                 <div class="location-status" id="locationStatus">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Location tracking enabled</span>
@@ -68,10 +81,13 @@
                         <p>Please select a staff member to continue</p>
                     </div>
                 </div>
-            </div>
-
-            <div class="recent-activity">
-                <h3>Recent Activity</h3>
+            </div>            <div class="recent-activity">
+                <div class="activity-header">
+                    <h3>Recent Activity</h3>
+                    <button id="clearActivityBtn" class="btn-clear-activity" title="Clear recent activity">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
                 <div class="activity-list" id="activityList">
                     <div class="no-activity">
                         <i class="fas fa-history"></i>

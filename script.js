@@ -4,6 +4,9 @@ let currentStatus = null;
 let unsubscribeSnapshot = null;
 let currentLocation = null;
 
+// Theme management
+let currentTheme = localStorage.getItem('theme') || 'light';
+
 // DOM Elements
 const staffSelect = document.getElementById('staffSelect');
 const clockInBtn = document.getElementById('clockInBtn');
@@ -15,6 +18,7 @@ const currentTimeDisplay = document.getElementById('currentTime');
 const loadingOverlay = document.getElementById('loadingOverlay');
 const toastContainer = document.getElementById('toastContainer');
 const locationStatus = document.getElementById('locationStatus');
+const themeToggle = document.getElementById('themeToggle');
 
 // Leave request modal elements
 const leaveModalOverlay = document.getElementById('leaveModalOverlay');
@@ -25,8 +29,47 @@ const leaveRequestForm = document.getElementById('leaveRequestForm');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    initializeTheme();
     initializeApp();
 });
+
+// Theme Management Functions
+function initializeTheme() {
+    // Apply saved theme
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    updateThemeToggle();
+    
+    // Add theme toggle event listener
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+}
+
+function toggleTheme() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('theme', currentTheme);
+    updateThemeToggle();
+    
+    // Add a subtle animation when switching themes
+    document.body.style.transition = 'background 0.3s ease, color 0.3s ease';
+    setTimeout(() => {
+        document.body.style.transition = '';
+    }, 300);
+}
+
+function updateThemeToggle() {
+    const lightIcon = themeToggle?.querySelector('.theme-icon-light');
+    const darkIcon = themeToggle?.querySelector('.theme-icon-dark');
+    
+    if (currentTheme === 'dark') {
+        lightIcon?.classList.remove('active');
+        darkIcon?.classList.add('active');
+    } else {
+        lightIcon?.classList.add('active');
+        darkIcon?.classList.remove('active');
+    }
+}
 
 function initializeApp() {
     updateCurrentTime();
