@@ -19,6 +19,7 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const toastContainer = document.getElementById('toastContainer');
 const locationStatus = document.getElementById('locationStatus');
 const themeToggle = document.getElementById('themeToggle');
+const clearActivityBtn = document.getElementById('clearActivityBtn');
 
 // Leave request modal elements
 const leaveModalOverlay = document.getElementById('leaveModalOverlay');
@@ -75,10 +76,10 @@ function initializeApp() {
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
       // Event listeners
-    staffSelect.addEventListener('change', handleStaffSelection);
-    clockInBtn.addEventListener('click', handleClockIn);
+    staffSelect.addEventListener('change', handleStaffSelection);    clockInBtn.addEventListener('click', handleClockIn);
     clockOutBtn.addEventListener('click', handleClockOut);
     leaveRequestBtn.addEventListener('click', openLeaveRequestModal);
+    clearActivityBtn.addEventListener('click', handleClearActivity);
     
     // Leave request modal listeners
     closeLeaveModal.addEventListener('click', closeLeaveRequestModal);
@@ -90,11 +91,13 @@ function initializeApp() {
       // Add ripple effect to buttons
     addRippleEffect();
     
-    // Load recent activity
-    loadRecentActivity();
+    // Load recent activity    loadRecentActivity();
     
     // Request location permission on app start
     requestLocationPermission();
+    
+    // Set up periodic auto-clear check (every hour)
+    setInterval(checkAndAutoCleanActivities, 60 * 60 * 1000);
     
     console.log('Shift Q initialized successfully!');
 }
@@ -346,7 +349,10 @@ function loadRecentActivity() {
 
 // Display activities in the UI
 function displayActivities(activities) {
-    if (activities.length === 0) {
+    // Apply auto-clear logic
+    const filteredActivities = checkAutoCleanActivity(activities);
+    
+    if (filteredActivities.length === 0) {
         activityList.innerHTML = `
             <div class="no-activity">
                 <i class="fas fa-history"></i>
@@ -356,7 +362,7 @@ function displayActivities(activities) {
         return;
     }
     
-    activityList.innerHTML = activities.map(activity => `
+    activityList.innerHTML = filteredActivities.map(activity => `
         <div class="activity-item ${activity.action}">
             <div class="activity-header">
                 <span class="activity-name">${activity.staffName}</span>
@@ -379,6 +385,18 @@ function displayActivities(activities) {
 
 // Add local activity (for demo purposes)
 function addLocalActivity(staffName, action, timestamp, location = null, extra = null) {
+    // Check if activities are manually cleared
+    const clearTime = localStorage.getItem('activityClearTime');
+    if (clearTime) {
+        const timeSinceCleared = Date.now() - parseInt(clearTime);
+        const twelveHoursInMs = 12 * 60 * 60 * 1000;
+        
+        // If less than 12 hours since manual clear, don't add activity to display
+        if (timeSinceCleared < twelveHoursInMs) {
+            return;
+        }
+    }
+    
     const existingNoActivity = activityList.querySelector('.no-activity');
     if (existingNoActivity) {
         activityList.innerHTML = '';
@@ -1105,3 +1123,67 @@ window.addEventListener('beforeunload', () => {
         clearInterval(window.taskManager.cleanupInterval);
     }
 });
+
+// Handle clear activity button
+function handleClearActivity() {
+    // Show confirmation dialog
+    if (confirm('Are you sure you want to clear the recent activity display? This will only clear the display, not the backend data.')) {
+        clearActivityDisplay();
+        showToast('Recent activity display cleared', 'success');
+    }
+}
+
+// Clear activity display
+function clearActivityDisplay() {
+    // Clear the display
+    activityList.innerHTML = `
+        <div class="no-activity">
+            <i class="fas fa-history"></i>
+            <p>No recent activity</p>
+        </div>
+    `;
+    
+    // Store clear timestamp in localStorage for auto-clear functionality
+    localStorage.setItem('activityClearTime', Date.now().toString());
+}
+
+// Check if activities should be auto-cleared (12 hours)
+function checkAutoCleanActivity(activities) {
+    const clearTime = localStorage.getItem('activityClearTime');
+    const twelveHoursInMs = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+    
+    if (clearTime) {
+        const timeSinceCleared = Date.now() - parseInt(clearTime);
+        
+        // If less than 12 hours since manual clear, don't show activities
+        if (timeSinceCleared < twelveHoursInMs) {
+            return [];
+        } else {
+            // Remove the clear timestamp as 12 hours have passed
+            localStorage.removeItem('activityClearTime');
+        }
+    }
+    
+    // Filter activities older than 12 hours for auto-clear
+    const twelveHoursAgo = new Date(Date.now() - twelveHoursInMs);
+    return activities.filter(activity => {
+        const activityTime = activity.timestamp;
+        return activityTime && activityTime > twelveHoursAgo;
+    });
+}
+
+// Periodic check for auto-clearing activities
+function checkAndAutoCleanActivities() {
+    const clearTime = localStorage.getItem('activityClearTime');
+    const twelveHoursInMs = 12 * 60 * 60 * 1000;
+    
+    if (clearTime) {
+        const timeSinceCleared = Date.now() - parseInt(clearTime);
+        
+        // If 12 hours have passed since manual clear, reload activities
+        if (timeSinceCleared >= twelveHoursInMs) {
+            localStorage.removeItem('activityClearTime');
+            loadRecentActivity(); // Reload activities
+        }
+    }
+}

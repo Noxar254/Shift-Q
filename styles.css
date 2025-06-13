@@ -663,19 +663,58 @@ input, textarea, .task-text, .activity-details, .status-text {
     border-radius: 25px;
     padding: 30px;
     box-shadow: 0 20px 40px var(--shadow-light);
-    border: 1px solid var(--border-light);
-    height: fit-content;
+    border: 1px solid var(--border-light);    height: fit-content;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
 .recent-activity h3 {
     color: var(--text-primary);
     font-size: 1.8rem;
     font-weight: 600;
-    margin-bottom: 25px;
+    margin: 0;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.btn-clear-activity {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-medium);
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 44px;
+    min-height: 36px;
+    justify-content: center;
+}
+
+.btn-clear-activity:hover {
+    background: var(--danger-color);
+    color: var(--text-inverse);
+    border-color: var(--danger-color);
+    transform: scale(1.05);
+}
+
+.btn-clear-activity:focus-visible {
+    outline: 2px solid var(--danger-color);
+    outline-offset: 2px;
+}
+
+.btn-clear-activity:active {
+    transform: scale(0.95);
 }
 
 .activity-list {
@@ -1617,17 +1656,26 @@ textarea.form-input {
     .status-display .status-text p {
         font-size: 0.9rem;
     }
-    
-    /* Recent Activity Mobile */
+      /* Recent Activity Mobile */
     .recent-activity {
         padding: 18px;
         border-radius: 16px;
         margin-bottom: 16px;
     }
     
+    .activity-header {
+        margin-bottom: 16px;
+    }
+    
     .recent-activity h3 {
         font-size: 1.3rem;
-        margin-bottom: 16px;
+    }
+    
+    .btn-clear-activity {
+        padding: 6px 10px;
+        min-width: 36px;
+        min-height: 32px;
+        border-radius: 8px;
     }
     
     .activity-item {
@@ -1924,16 +1972,27 @@ textarea.form-input {
     .status-display .status-text p {
         font-size: 0.85rem;
     }
-    
-    /* Recent Activity Extra Small */
+      /* Recent Activity Extra Small */
     .recent-activity {
         padding: 16px;
         border-radius: 12px;
     }
     
+    .activity-header {
+        margin-bottom: 14px;
+    }
+    
     .recent-activity h3 {
         font-size: 1.2rem;
-        margin-bottom: 14px;
+        margin: 0;
+    }
+    
+    .btn-clear-activity {
+        padding: 4px 8px;
+        min-width: 32px;
+        min-height: 28px;
+        border-radius: 6px;
+        font-size: 0.8rem;
     }
     
     .activity-item {
