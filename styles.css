@@ -442,15 +442,29 @@ input, textarea, .task-text, .activity-details, .status-text {
 
 .staff-dropdown {
     width: 100%;
-    padding: 15px 20px;
+    padding: 16px 20px;
     border: 2px solid var(--border-light);
     border-radius: 15px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     background: var(--bg-card);
     color: var(--text-primary);
     transition: all 0.3s ease;
     cursor: pointer;
+    line-height: 1.4;
+    min-height: 50px;
+}
+
+.staff-dropdown option {
+    padding: 12px;
+    font-size: 1rem;
+    line-height: 1.4;
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.staff-dropdown option:not(:first-child) {
+    border-top: 1px solid var(--border-light);
 }
 
 .staff-dropdown:focus {
@@ -752,14 +766,27 @@ input, textarea, .task-text, .activity-details, .status-text {
 
 .activity-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: space-between;    align-items: center;
     margin-bottom: 5px;
+}
+
+.staff-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .activity-name {
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.activity-role {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 .activity-action {

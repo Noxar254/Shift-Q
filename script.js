@@ -1,5 +1,6 @@
 // Global variables
 let currentStaff = null;
+let currentStaffRole = null;
 let currentStatus = null;
 let unsubscribeSnapshot = null;
 let currentLocation = null;
@@ -121,7 +122,12 @@ function updateCurrentTime() {
 // Handle staff selection
 async function handleStaffSelection() {
     const selectedStaff = staffSelect.value;
-      if (!selectedStaff) {        currentStaff = null;
+    const selectedOption = staffSelect.options[staffSelect.selectedIndex];
+    const staffRole = selectedOption.getAttribute('data-role');
+    
+    if (!selectedStaff) {
+        currentStaff = null;
+        currentStaffRole = null;
         updateButtonStates(false, false, false);
         updateStatusDisplay('info', 'Please select a staff member to continue');
         
@@ -133,6 +139,7 @@ async function handleStaffSelection() {
     }
     
     currentStaff = selectedStaff;
+    currentStaffRole = staffRole;
     showLoading(true);
     
     try {
@@ -426,10 +433,12 @@ function addLocalActivity(staffName, action, timestamp, location = null, extra =
             }
             break;
     }
-    
-    activityItem.innerHTML = `
+      activityItem.innerHTML = `
         <div class="activity-header">
-            <span class="activity-name">${staffName}</span>
+            <div class="staff-info">
+                <span class="activity-name">${staffName}</span>
+                ${currentStaffRole ? `<span class="activity-role">${currentStaffRole}</span>` : ''}
+            </div>
             <span class="activity-action ${action}">
                 ${actionText}
             </span>
