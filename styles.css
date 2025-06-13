@@ -146,6 +146,8 @@ input, textarea, .task-text, .activity-details, .status-text {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Theme Toggle Styles */
@@ -1479,11 +1481,67 @@ textarea.form-input {
     }
 }
 
-/* Responsive Design */
+/* Enhanced Responsive Alignment */
+@media (min-width: 1920px) {
+    .container { max-width: 1600px; padding: 40px 60px; }
+}
+
+@media (max-width: 1440px) and (min-width: 1201px) {
+    .container { padding: 26px 32px; }
+}
+
+@media (max-width: 480px) and (min-width: 361px) {
+    .container { padding: 10px 14px; }
+}
+
+/* Landscape Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .container { padding: 8px 16px; }
+    .header { padding: 8px 16px; margin-bottom: 12px; }
+}
+
+/* Ultra Wide Screens */
+@media (min-width: 1920px) {
+    .container {
+        max-width: 1600px;
+        padding: 40px 60px;
+    }
+}
+
+/* Large Desktop */
+@media (min-width: 1440px) {
+    .container {
+        max-width: 1400px;
+        padding: 30px 40px;
+    }
+}
+
+/* Medium Desktop */
+@media (max-width: 1440px) and (min-width: 1201px) {
+    .container {
+        padding: 26px 32px;
+    }
+}
+
+/* Desktop */
+@media (max-width: 1200px) and (min-width: 1025px) {
+    .container {
+        padding: 24px 30px;
+    }
+}
+
+/* Small Desktop / Large Tablet */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .container {
+        padding: 18px 24px;
+    }
+}
+
 /* Tablet Styles */
 @media (max-width: 1024px) {
     .container {
-        padding: 18px;
+        padding: 20px 24px;
+        max-width: 100%;
     }
     
     .header {
@@ -1506,7 +1564,7 @@ textarea.form-input {
 /* Mobile Landscape and Small Tablets */
 @media (max-width: 768px) {
     .container {
-        padding: 12px;
+        padding: 16px 20px;
         min-height: 100vh;
     }
     
@@ -1868,7 +1926,7 @@ textarea.form-input {
 /* Mobile Portrait */
 @media (max-width: 480px) {
     .container {
-        padding: 8px;
+        padding: 12px 16px;
     }
     
     /* Header Extra Small Mobile */
@@ -2152,7 +2210,7 @@ textarea.form-input {
 /* Extra Small Mobile Portrait (Very Small Screens) */
 @media (max-width: 360px) {
     .container {
-        padding: 6px;
+        padding: 8px 12px;
     }
     
     .header {
@@ -2596,5 +2654,43 @@ textarea:focus-visible {
     
     .location-status i {
         font-size: 0.9rem;
+    }
+}
+
+/* Ensure perfect centering and consistent spacing */
+.header,
+.main-content,
+.clock-card,
+.recent-activity,
+.task-management {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Prevent content overflow on very small screens */
+* {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ensure consistent padding on all screen sizes */
+@media (max-width: 320px) {
+    .container {
+        padding: 6px 10px;
+        min-width: 280px;
+    }
+    
+    .header {
+        padding: 8px 12px;
+    }
+}
+
+/* Extra responsive refinements */
+@media (min-width: 2560px) {
+    .container {
+        max-width: 1800px;
+        padding: 50px 80px;
     }
 }
