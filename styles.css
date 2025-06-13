@@ -1572,28 +1572,25 @@ textarea.form-input {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
-    /* Header Mobile Optimizations */
+      /* Header Mobile Optimizations */
     .header {
         flex-direction: column;
-        gap: 12px;
+        gap: 20px;
         text-align: center;
-        padding: 16px 20px;
-        margin-bottom: 20px;
+        padding: 20px;
+        margin-bottom: 24px;
         border-radius: 16px;
-    }
-      .header-info {
+    }      .header-info {
         width: 100%;
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        gap: 12px;
-    }
-      .location-status {
-        font-size: 0.8rem;
-        padding: 10px 16px;
+        gap: 16px;
+    }      .location-status {
+        font-size: 0.9rem;
+        padding: 12px 20px;
         border-radius: 20px;
-        min-width: 180px;
+        min-width: 200px;
         text-align: center;
         white-space: nowrap;
         flex-shrink: 0;
@@ -1601,12 +1598,13 @@ textarea.form-input {
         box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
     }
       .current-time {
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--text-primary) !important;
         text-align: center;
         width: 100%;
         margin-top: 4px;
+        padding: 12px 16px;
     }
     
     /* Logo Mobile Optimizations */
@@ -1928,29 +1926,27 @@ textarea.form-input {
     .container {
         padding: 12px 16px;
     }
-    
-    /* Header Extra Small Mobile */
+      /* Header Extra Small Mobile */
     .header {
-        padding: 12px 16px;
-        margin-bottom: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
         border-radius: 12px;
     }
-    
-    .logo {
-        gap: 8px;
+      .logo {
+        gap: 12px;
     }
     
     .logo-icon {
-        width: 38px;
-        height: 38px;
+        width: 48px;
+        height: 48px;
     }
     
     .shift-q {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
     }
     
     .logo-text h1 {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
     }
     
     .tagline {
