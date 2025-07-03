@@ -1948,772 +1948,812 @@ textarea.form-input {
     }
 }
 
-/* Mobile Portrait */
+/* Mobile Portrait - Comprehensive Improvements */
 @media (max-width: 480px) {
     .container {
-        padding: 12px 16px;
+        padding: 8px 12px;
+        min-height: 100vh;
     }
-      /* Header Extra Small Mobile */
+    
+    /* Header - Optimized for mobile */
     .header {
-        padding: 18px;
-        margin-bottom: 20px;
-        border-radius: 12px;
-    }
-      .logo {
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        flex-direction: column;
         gap: 12px;
+        min-height: auto;
+    }
+    
+    .logo {
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
     }
     
     .logo-icon {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
     }
     
     .shift-q {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
     
     .logo-text h1 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+        text-align: center;
     }
     
     .tagline {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
+        text-align: center;
     }
     
     .header-info {
-        gap: 6px;
+        gap: 8px;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
     }
-      .location-status {
-        font-size: 0.75rem;
-        padding: 8px 14px;
-        min-width: 160px;
-        border-radius: 16px;
-        margin-bottom: 6px;
-        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    
+    .theme-toggle-container {
+        order: 3;
+        margin-right: 0;
+    }
+    
+    .theme-toggle {
+        width: 56px;
+        height: 28px;
+    }
+    
+    .location-status {
+        font-size: 0.8rem;
+        padding: 10px 16px;
+        min-width: auto;
+        width: fit-content;
+        border-radius: 20px;
+        margin-bottom: 0;
+        box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+        order: 1;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .current-time {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        order: 2;
+        background: var(--bg-card);
+        padding: 8px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border-light);
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
-    /* Clock Card Extra Small */
+    /* Clock Card - Better mobile layout */
     .clock-card {
-        padding: 16px;
-        border-radius: 12px;
+    /* Clock Card - Better mobile layout */
+    .clock-card {
+        padding: 18px;
+        border-radius: 16px;
+        margin-bottom: 16px;
     }
     
     .card-header h2 {
-        font-size: 1.6rem;
-        margin-bottom: 6px;
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        line-height: 1.2;
     }
     
     .card-header p {
-        font-size: 0.9rem;
+        font-size: 1rem;
+        margin-bottom: 20px;
     }
     
-    /* Staff Selection Extra Small */
+    /* Staff Selection - Mobile optimized */
     .staff-selection {
         margin-bottom: 24px;
     }
     
+    .staff-selection label {
+        font-size: 1rem;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    
     .staff-dropdown {
-        padding: 14px 16px;
-        font-size: 0.95rem;
-        min-height: 46px;
+        padding: 16px;
+        font-size: 1rem;
+        min-height: 52px;
+        border-radius: 12px;
+        border-width: 2px;
     }
     
     .location-notice {
-        padding: 10px 14px;
-        font-size: 0.8rem;
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        margin-top: 12px;
+        border-radius: 12px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
     }
     
-    /* Buttons Extra Small */
+    /* Clock Buttons - Larger touch targets */
+    .clock-buttons {
+        gap: 12px;
+        margin-bottom: 24px;
+        grid-template-columns: 1fr;
+    }
+    
+    .clock-buttons .btn-leave-request {
+        grid-column: 1;
+        margin-top: 8px;
+    }
+    
     .btn {
-        padding: 16px 12px;
-        font-size: 0.95rem;
-        min-height: 52px;
-        border-radius: 12px;
+        padding: 18px 16px;
+        font-size: 1.1rem;
+        min-height: 56px;
+        border-radius: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
     
     .btn i {
-        font-size: 1rem;
+        font-size: 1.2rem;
     }
     
-    .clock-buttons {
-        gap: 10px;
-        margin-bottom: 24px;
+    .btn span {
+        margin-left: 8px;
     }
     
-    /* Status Display Extra Small */
+    /* Status Display - Better readability */
     .status-display {
-        padding: 14px;
-        border-radius: 10px;
-    }
-    
-    .status-display .status-text p {
-        font-size: 0.85rem;
-    }
-      /* Recent Activity Extra Small */
-    .recent-activity {
         padding: 16px;
         border-radius: 12px;
-    }
-    
-    .activity-header {
-        margin-bottom: 14px;
-    }
-    
-    .recent-activity h3 {
-        font-size: 1.2rem;
-        margin: 0;
-    }
-    
-    .btn-clear-activity {
-        padding: 4px 8px;
-        min-width: 32px;
-        min-height: 28px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-    }
-    
-    .activity-item {
-        padding: 10px 14px;
-        border-radius: 10px;
-    }
-    
-    .activity-item .activity-details h4 {
-        font-size: 0.95rem;
-    }
-    
-    .activity-item .activity-details p {
-        font-size: 0.8rem;
-    }
-    
-    /* Modal Extra Small */
-    .modal {
-        width: 96%;
-        max-width: 360px;
-        margin: 8px;
-        border-radius: 12px;
-    }
-    
-    .modal-header {
-        padding: 14px 18px;
-        border-radius: 12px 12px 0 0;
-    }
-    
-    .modal-header h3 {
-        font-size: 1.1rem;
-    }
-    
-    .modal-close {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-    }
-    
-    .modal-body {
-        padding: 18px;
-        max-height: 55vh;
-    }
-    
-    .form-group {
         margin-bottom: 16px;
     }
     
-    .form-group label {
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-    }
-    
-    .form-input {
-        padding: 12px 14px;
+    .status-display .status-text p {
         font-size: 0.95rem;
-        border-radius: 10px;
-        min-height: 44px;
+        line-height: 1.4;
     }
     
-    .form-input[type="textarea"] {
-        min-height: 70px;
-    }
-    
-    .modal-footer {
-        padding: 14px 18px;
-        gap: 8px;
-        border-radius: 0 0 12px 12px;
-    }
-    
-    .modal-footer .btn {
-        padding: 14px;
-        font-size: 0.95rem;
-        min-height: 48px;
-    }
-    
-    /* Task Management Extra Small */
-    .task-management {
-        padding: 16px;
-        margin-top: 14px;
-        border-radius: 12px;
-    }
-    
-    .task-header {
-        margin-bottom: 14px;
-    }
-    
-    .task-header h3 {
-        font-size: 1.1rem;
-    }
-    
-    .btn-clear-all {
-        padding: 6px;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-    }
-    
-    .task-input {
-        font-size: 0.95rem;
-        padding: 12px 14px;
-        min-height: 44px;
-        border-radius: 10px;
-    }
-    
-    .btn-add-task {
-        padding: 12px 14px;
-        min-width: 44px;
-        min-height: 44px;
-        border-radius: 10px;
-    }
-    
-    .task-item {
-        padding: 12px 14px;
-        gap: 8px;
-        border-radius: 10px;
-        margin-bottom: 6px;
-    }
-    
-    .task-text {
-        font-size: 0.9rem;
-    }
-    
-    .task-time {
-        font-size: 0.75rem;
-    }
-    
-    .task-actions button {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-    }
-    
-    /* Toast Extra Small */
-    .toast {
-        margin: 0 8px 6px;
-        padding: 10px 14px;
-        font-size: 0.85rem;
-        border-radius: 10px;
-    }
-    
-    .toast-container {
-        padding: 0 8px;
-    }
-    
-    /* Loading Overlay Extra Small */
-    .loading-spinner {
-        padding: 24px;
-        border-radius: 12px;
-    }
-    
-    .loading-spinner p {
-        font-size: 0.85rem;
-        margin-top: 14px;
-    }
-}
-
-/* Extra Small Mobile Portrait (Very Small Screens) */
-@media (max-width: 360px) {
-    .container {
-        padding: 8px 12px;
-    }
-    
-    .header {
-        padding: 10px 12px;
-        margin-bottom: 12px;
-    }
-    
-    .logo-icon {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .shift-q {
+    .status-icon i {
         font-size: 1.2rem;
     }
     
-    .logo-text h1 {
-        font-size: 1rem;
+    /* Recent Activity - Mobile optimized */
+    .recent-activity {
+        padding: 18px;
+        border-radius: 16px;
+        margin-bottom: 16px;
     }
     
-    .tagline {
-        font-size: 0.65rem;
+    .activity-header {
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     
-    .clock-card {
-        padding: 12px;
+    .recent-activity h3 {
+        font-size: 1.3rem;
+        margin: 0;
+        font-weight: 600;
     }
     
-    .card-header h2 {
-        font-size: 1.4rem;
-    }
-    
-    .btn {
-        padding: 14px 10px;
+    .btn-clear-activity {
+        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        border-radius: 8px;
         font-size: 0.9rem;
+    }
+    
+    .activity-item {
+        padding: 14px 16px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .activity-item .activity-time {
+        font-size: 0.8rem;
+    }
+    
+    .activity-item .activity-details h4 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    
+    .activity-item .activity-details p {
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+    
+    /* Modal Mobile Optimizations */
+    .modal {
+        width: 95%;
+        max-width: 400px;
+        margin: 10px;
+        border-radius: 16px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        font-size: 1rem;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 500;
+    }
+    
+    .form-input {
+        padding: 14px 16px;
+        font-size: 1rem;
+        border-radius: 12px;
+        min-height: 48px;
+        width: 100%;
+        border: 2px solid var(--border-light);
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+    
+    .form-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .form-input[type="date"] {
         min-height: 48px;
     }
     
+    textarea.form-input {
+        min-height: 80px;
+        resize: vertical;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        min-height: auto;
+    }
+    
+    .modal-footer {
+        padding: 16px 20px;
+        gap: 12px;
+        border-radius: 0 0 16px 16px;
+        display: flex;
+        justify-content: space-between;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-light);
+    }
+    
+    .modal-footer .btn {
+        padding: 14px 20px;
+        font-size: 1rem;
+        min-height: 48px;
+        flex: 1;
+        border-radius: 12px;
+    }
+    
+    /* Task Management Mobile */
+    .task-management {
+        padding: 18px;
+        margin-top: 16px;
+        border-radius: 16px;
+    }
+    
+    .task-header {
+        margin-bottom: 16px;
+    }
+    
+    .task-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .btn-clear-all {
+        padding: 8px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+    
+    .task-input-container {
+        margin-bottom: 16px;
+    }
+    
+    .task-input {
+        font-size: 1rem;
+        padding: 14px 16px;
+        border-radius: 12px;
+        min-height: 48px;
+    }
+    
+    .btn-add-task {
+        padding: 14px 16px;
+        min-width: 48px;
+        min-height: 48px;
+        border-radius: 12px;
+        background: var(--primary-color);
+        color: var(--text-inverse);
+        border: none;
+    }
+    
+    .task-item {
+        padding: 14px 16px;
+        gap: 12px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .task-text {
+        font-size: 0.95rem;
+        line-height: 1.3;
+        flex: 1;
+    }
+    
+    .task-time {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+    }
+    
+    .task-actions {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .task-actions button {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+    
+    .no-tasks {
+        padding: 24px;
+        text-align: center;
+    }
+    
+    .no-tasks p {
+        font-size: 0.9rem;
+        margin-top: 8px;
+    }
+    
+    /* Modal - Mobile optimized */
     .modal {
-        width: 98%;
+        width: 95%;
+        max-width: 380px;
+        margin: 12px auto;
+        border-radius: 16px;
+        max-height: 90vh;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .modal-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        font-size: 1rem;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 500;
+    }
+    
+    .form-input {
+        padding: 14px 16px;
+        font-size: 1rem;
+        border-radius: 12px;
+        min-height: 48px;
+        width: 100%;
+        border: 2px solid var(--border-light);
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+    
+    .form-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .form-input[type="date"] {
+        min-height: 48px;
+    }
+    
+    textarea.form-input {
+        min-height: 80px;
+        resize: vertical;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        min-height: auto;
+    }
+    
+    .modal-footer {
+        padding: 16px 20px;
+        gap: 12px;
+        border-radius: 0 0 16px 16px;
+        display: flex;
+        justify-content: space-between;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-light);
+    }
+    
+    .modal-footer .btn {
+        padding: 14px 20px;
+        font-size: 1rem;
+        min-height: 48px;
+        flex: 1;
+        border-radius: 12px;
+    }
+    
+    /* Toast - Mobile optimized */
+    .toast {
+        margin: 0 12px 8px;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .toast-container {
+        padding: 0 12px;
+        top: 20px;
+        z-index: 1000;
+    }
+    
+    /* Loading Overlay - Mobile optimized */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-overlay);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .loading-spinner {
+        padding: 24px;
+        border-radius: 16px;
+        background: var(--bg-card);
+        text-align: center;
+        box-shadow: 0 10px 30px var(--shadow-heavy);
+    }
+    
+    .loading-spinner p {
+        font-size: 0.9rem;
+        margin-top: 16px;
+        color: var(--text-primary);
+    }
+}
+
+/* Mobile-specific improvements for touch and accessibility */
+@media (max-width: 768px) {
+    /* Ensure all interactive elements have proper touch targets */
+    button, 
+    .btn, 
+    input, 
+    select, 
+    textarea,
+    [role="button"],
+    [tabindex="0"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Improve tap highlights */
+    button:active,
+    .btn:active,
+    input:active,
+    select:active {
+        background-color: var(--primary-light);
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    /* Better focus indicators for keyboard navigation */
+    button:focus-visible,
+    .btn:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 3px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+    
+    /* Improve scrolling on mobile */
+    .modal-body,
+    .activity-list,
+    .task-list {
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
+    }
+    
+    /* Prevent zoom on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Better spacing for mobile content */
+    .main-content > * + * {
+        margin-top: 16px;
+    }
+    
+    /* Improve button spacing */
+    .clock-buttons .btn + .btn {
+        margin-top: 8px;
+    }
+    
+    /* Better modal positioning on mobile */
+    .modal-overlay {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Improve form element spacing */
+    .form-group + .form-group {
+        margin-top: 20px;
+    }
+    
+    /* Better activity and task item spacing */
+    .activity-item + .activity-item,
+    .task-item + .task-item {
+        margin-top: 8px;
+    }
+    
+    /* Improve loading spinner on mobile */
+    .loading-spinner {
+        min-width: 200px;
+        min-height: 120px;
+    }
+    
+    /* Better toast positioning */
+    .toast-container {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        z-index: 1000;
+        pointer-events: none;
+    }
+    
+    .toast {
+        pointer-events: auto;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 12px var(--shadow-medium);
+    }
+}
+
+/* Additional improvements for very small screens */
+@media (max-width: 320px) {
+    /* Reduce padding to maximize space */
+    .container {
+        padding: 4px 8px;
+    }
+    
+    /* Stack buttons vertically on very small screens */
+    .clock-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .clock-buttons .btn-leave-request {
+        grid-column: 1;
+        margin-top: 0;
+    }
+    
+    /* Reduce modal padding */
+    .modal {
         margin: 4px;
     }
     
     .modal-header,
     .modal-body,
     .modal-footer {
-        padding-left: 14px;
-        padding-right: 14px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .modal-header {
+        padding-top: 14px;
+        padding-bottom: 14px;
+    }
+    
+    .modal-body {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+    
+    .modal-footer {
+        padding-top: 14px;
+        padding-bottom: 14px;
+        gap: 8px;
+    }
+    
+    .modal-close {
+        width: 36px;
+        height: 36px;
     }
     
     .form-input {
-        padding: 10px 12px;
-        min-height: 40px;
+        padding: 12px 14px;
+        min-height: 44px;
+        font-size: 0.95rem;
+    }
+    
+    textarea.form-input {
+        min-height: 70px;
     }
     
     .task-management,
     .recent-activity {
-        padding: 12px;
+        padding: 14px;
     }
     
     .task-input {
-        padding: 10px 12px;
-        min-height: 40px;
+        padding: 12px 14px;
+        min-height: 44px;
+        font-size: 0.95rem;
     }
     
     .btn-add-task {
-        min-width: 40px;
-        min-height: 40px;
-        padding: 10px 12px;
-    }
-}
-
-/* Landscape Mobile Orientation */
-@media (max-width: 768px) and (orientation: landscape) {
-    .header {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 20px;
-    }
-    
-    .logo {
-        flex-direction: row;
-        text-align: left;
-    }
-    
-    .header-info {
-        flex-direction: column;
-        align-items: flex-end;
-        width: auto;
-        gap: 4px;
-    }
-    
-    .current-time {
-        width: auto;
-        margin-top: 0;
-        text-align: right;
-    }
-      .location-status {
-        min-width: auto;
-        flex: none;
-        font-size: 0.8rem;
-        padding: 6px 12px;
-        margin-bottom: 0;
-        white-space: nowrap;
-    }
-    
-    .clock-buttons {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-    
-    .clock-buttons .btn-leave-request {
-        grid-column: 1 / -1;
-        margin-top: 8px;
-    }
-    
-    .modal {
-        max-height: 85vh;
-    }
-    
-    .modal-body {
-        max-height: 50vh;
-    }
-}
-
-/* Mobile Touch Improvements */
-@media (hover: none) and (pointer: coarse) {
-    /* Touch device specific styles */
-    .btn:active {
-        transform: scale(0.95);
-        transition: transform 0.1s ease;
-    }
-    
-    .staff-dropdown:active,
-    .form-input:active {
-        transform: scale(0.98);
-        transition: transform 0.1s ease;
-    }
-    
-    .task-input:active {
-        transform: scale(0.98);
-        transition: transform 0.1s ease;
-    }
-    
-    /* Remove hover effects on touch devices */
-    .btn:hover {
-        transform: none;
-        box-shadow: none;
-    }
-    
-    .staff-dropdown:hover {
-        border-color: #e0e0e0;
-        transform: none;
-    }
-    
-    .task-item:hover {
-        transform: none;
-    }
-    
-    /* Improve touch targets */
-    .btn {
-        min-height: 48px;
-        min-width: 48px;
-    }
-    
-    .modal-close,
-    .btn-clear-all,
-    .btn-add-task,
-    .task-actions button {
-        min-height: 44px;
         min-width: 44px;
-    }
-}
-
-/* Improved focus styles for accessibility */
-.btn:focus-visible,
-.staff-dropdown:focus-visible,
-.form-input:focus-visible,
-.task-input:focus-visible {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-}
-
-/* Better safe area handling for modern phones */
-@supports (padding: max(0px)) {
-    .container {
-        padding-left: max(20px, env(safe-area-inset-left));
-        padding-right: max(20px, env(safe-area-inset-right));
-        padding-bottom: max(20px, env(safe-area-inset-bottom));
-    }
-    
-    @media (max-width: 768px) {
-        .container {
-            padding-left: max(12px, env(safe-area-inset-left));
-            padding-right: max(12px, env(safe-area-inset-right));
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .container {
-            padding-left: max(8px, env(safe-area-inset-left));
-            padding-right: max(8px, env(safe-area-inset-right));
-            padding-bottom: max(8px, env(safe-area-inset-bottom));
-        }
-    }
-}
-
-/* Improved scrolling for mobile */
-.modal-body,
-.activity-list,
-.task-list {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-}
-
-/* Better form input handling on mobile */
-@media (max-width: 768px) {
-    input[type="text"],
-    input[type="date"],
-    select,
-    textarea {
-        font-size: 16px; /* Prevents zoom on iOS */
-        -webkit-appearance: none;
-        appearance: none;
-    }
-    
-    select {
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 20px;
-        padding-right: 40px;
-    }
-}
-
-/* Additional theming styles */
-.no-activity,
-.no-tasks {
-    color: var(--text-secondary);
-}
-
-.no-activity i,
-.no-tasks i {
-    color: var(--text-tertiary);
-}
-
-.activity-item {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-light);
-    color: var(--text-primary);
-}
-
-.activity-item .activity-time {
-    color: var(--text-secondary);
-}
-
-.activity-item .activity-details h4 {
-    color: var(--text-primary);
-}
-
-.activity-item .activity-details p {
-    color: var(--text-secondary);
-}
-
-.task-item {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-light);
-    color: var(--text-primary);
-}
-
-.task-item .task-text {
-    color: var(--text-primary);
-}
-
-.task-item .task-time {
-    color: var(--text-secondary);
-}
-
-.task-expired {
-    opacity: 0.6;
-    border-left: 4px solid var(--danger-color);
-}
-
-.task-expired .task-content {
-    text-decoration: line-through;
-    color: var(--text-tertiary);
-}
-
-/* Toast styles */
-.toast {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-    box-shadow: 0 8px 25px var(--shadow-medium);
-}
-
-.toast.success {
-    border-left: 4px solid var(--accent-color);
-}
-
-.toast.error {
-    border-left: 4px solid var(--danger-color);
-}
-
-.toast.warning {
-    border-left: 4px solid var(--warning-color);
-}
-
-/* Loading overlay */
-.loading-overlay {
-    background: var(--bg-overlay);
-}
-
-.loading-spinner {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-}
-
-/* Scrollbar theming */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg-tertiary);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-medium);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--border-dark);
-}
-
-/* Smooth transitions for theme changes */
-* {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-}
-
-/* Focus indicators for better accessibility */
-button:focus-visible,
-select:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
-/* Better button states */
-.btn:active {
-    transform: translateY(1px);
-}
-
-.btn[disabled] {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.btn[disabled]:hover {
-    transform: none;
-}
-
-/* Professional shadows */
-.header,
-.clock-card,
-.recent-activity,
-.task-management {
-    box-shadow: 
-        0 1px 3px var(--shadow-light),
-        0 10px 20px var(--shadow-light),
-        0 0 0 1px var(--border-light);
-}
-
-/* Dark theme specific adjustments */
-[data-theme="dark"] {
-    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    --gradient-secondary: linear-gradient(135deg, #f87171 0%, #fb7185 100%);
-    --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-/* Location status states */
-.location-status.disabled {
-    opacity: 0.6;
-}
-
-.location-status.disabled i {
-    color: var(--warning-color);
-}
-
-/* Enhanced location status for mobile */
-@media (max-width: 768px) {
-    .location-status {
-        /* Better touch target */
         min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-          /* Enhanced visual design */
-        background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        
-        /* Improved typography */
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        
-        /* Better spacing */
-        gap: 6px;
-        
-        /* Enhanced shadow */
-        box-shadow: 
-            0 4px 12px rgba(16, 185, 129, 0.3),
-            0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 12px;
     }
     
-    .location-status i {
-        font-size: 1rem;
-        opacity: 0.9;
+    .task-item {
+        padding: 12px 14px;
+        gap: 8px;
     }
     
-    .location-status:active {
-        transform: scale(0.98);
-        transition: transform 0.1s ease;
-    }
-}
-
-/* Extra enhancements for very small screens */
-@media (max-width: 480px) {
-    .location-status {
-        font-size: 0.75rem;
-        padding: 8px 14px;
-        min-width: 160px;
-        min-height: 40px;
+    .task-actions button {
+        width: 32px;
+        height: 32px;
     }
     
-    .location-status i {
-        font-size: 0.9rem;
-    }
-}
-
-/* Ensure perfect centering and consistent spacing */
-.header,
-.main-content,
-.clock-card,
-.recent-activity,
-.task-management {
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Prevent content overflow on very small screens */
-* {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-/* Ensure consistent padding on all screen sizes */
-@media (max-width: 320px) {
-    .container {
-        padding: 6px 10px;
-        min-width: 280px;
+    .activity-item {
+        padding: 12px 14px;
     }
     
-    .header {
-        padding: 8px 12px;
+    .btn-clear-activity,
+    .btn-clear-all {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
     }
 }
 
-/* Extra responsive refinements */
-@media (min-width: 2560px) {
-    .container {
-        max-width: 1800px;
-        padding: 50px 80px;
+/* High DPI displays optimization */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2), 
+       (max-width: 768px) and (min-resolution: 192dpi) {
+    /* Crisper icons and borders */
+    .logo-icon,
+    .btn,
+    .form-input,
+    .modal {
+        transform: translateZ(0);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Dark mode specific mobile improvements */
+@media (max-width: 768px) {
+    [data-theme="dark"] .btn:active {
+        background-color: var(--bg-tertiary);
+    }
+    
+    [data-theme="dark"] .form-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 }
